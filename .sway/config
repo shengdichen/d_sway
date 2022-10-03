@@ -61,28 +61,6 @@ include ~/.sway/commands/all.conf
 
 
 # --------------- {{{[bgn] kernel component controls ---------------
-# --------------- {{{[bgn] brightness ---------------
-# Requirement:
-#       $ chown /sys/class/backlight/intel_backlight/brightness
-# to current user to allow level changes
-
-
-#       bindsym XF86MonBrightnessDown \
-#           exec --no-startup-id /home/shengdi/.config/i3/scripts/decBrightness.sh
-#
-#       bindsym XF86MonBrightnessUp \
-#           exec --no-startup-id /home/shengdi/.config/i3/scripts/incBrightness.sh
-#
-#       bindsym Mod1+XF86MonBrightnessDown \
-#           exec --no-startup-id echo 0 > /sys/class/backlight/intel_backlight/brightness
-#
-#       bindsym Mod1+XF86MonBrightnessUp \
-#           exec --no-startup-id echo 500 > /sys/class/backlight/intel_backlight/brightness
-
-
-# --------------- brightness [end]}}} ---------------
-
-
 # --------------- {{{[beg] network ---------------
 
 
