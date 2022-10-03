@@ -61,20 +61,6 @@ include ~/.sway/commands/all.conf
 
 
 # --------------- {{{[bgn] kernel component controls ---------------
-# --------------- {{{[beg] fan controls ---------------
-
-
-#       bindsym Mod1+XF86AudioMute \
-#           exec --no-startup-id echo level 0 > /proc/acpi/ibm/fan
-#
-#       bindsym $mod+XF86AudioMute \
-#           exec --no-startup-id echo level auto > /proc/acpi/ibm/fan
-#
-#       bindsym $mod+Mod1+XF86AudioMute \
-#           exec --no-startup-id echo level 5 > /proc/acpi/ibm/fan
-# --------------- fan controls [end]}}} ---------------
-
-
 # --------------- kernel component controls [end]}}} ---------------
 
 
