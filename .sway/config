@@ -61,20 +61,6 @@ include ~/.sway/commands/all.conf
 
 
 # --------------- {{{[bgn] kernel component controls ---------------
-# --------------- {{{[beg] network ---------------
-
-
-#       # switch off network connections via networkmanager
-#       bindsym XF86WLAN \
-#           exec --no-startup-id nmcli radio all off
-#
-#       bindsym Mod1+XF86WLAN \
-#           exec --no-startup-id nmcli radio wifi on
-
-
-# --------------- network [end]}}} ---------------
-
-
 # --------------- {{{[beg] fan controls ---------------
 
 
