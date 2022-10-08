@@ -15,7 +15,6 @@
 #
 #
 
-
 include ~/.sway/main.conf
 
 # vim: foldmethod=marker
