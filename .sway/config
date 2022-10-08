@@ -63,26 +63,4 @@ include ~/.sway/commands/all.conf
 # --------------- {{{[bgn] kernel component controls ---------------
 # --------------- kernel component controls [end]}}} ---------------
 
-
-
-
-
-
-
-# --------------- {{{[bgn] overview: modes ---------------
-# --------------- {{{[bgn] default mode ---------------
-# Usage scenario:
-#       navigating in a specific workspace
-#       changing between workspaces
-# Not to be confused with displacement mode, usage scenario:
-#       changing positions of panes in a workspace
-#       changing viewports to a different workspace
-# Leading philosophy:
-#       fullscreen mode by default
-#       exploit the |--release| feature of bindsym to guarantee fullscreen
-
-# --------------- default mode [end]}}} ---------------
-
-# --------------- overview: modes [end]}}} ---------------
-
 # vim: foldmethod=marker
