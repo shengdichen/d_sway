@@ -176,3 +176,4 @@ include ~/.sway/commands/all.conf
 
 # --------------- overview: modes [end]}}} ---------------
 
+# vim: foldmethod=marker
