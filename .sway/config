@@ -16,23 +16,7 @@
 #
 
 
-include ~/.sway/general/guide.conf
-
-include ~/.sway/options/all.conf
-
-
-
-include ~/.sway/options_and_commands/all.conf
-
-
-
-include ~/.sway/commands/all.conf
-
-
-
-
-# --------------- {{{[bgn] kernel component controls ---------------
-# --------------- kernel component controls [end]}}} ---------------
+include ~/.sway/main.conf
 
 
 
