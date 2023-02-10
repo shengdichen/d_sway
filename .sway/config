@@ -15,6 +15,6 @@
 #
 #
 
-include ./main.conf
+include ./conf/main.conf
 
 # vim: filetype=swayconfig
