@@ -1,20 +1,3 @@
-# Configuration file for sway - a tiling window manager for Wayland
-# Written from scratch by Shengdi Chen
-
-#
-#                  #
-#               ##
-#             ##
-#            ###             *  *  *
-#              ##          **      *
-#                ##       **
-#                  #     ***
-#                #        **
-#              #           **      *     ::
-#            #               * * * *
-#
-#
-
 include ./conf/main.conf
 
 # vim: filetype=swayconfig
