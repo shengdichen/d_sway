@@ -1,3 +1,5 @@
 include ./conf/main.conf
 
+include ./util/launch.conf
+
 # vim: filetype=swayconfig
