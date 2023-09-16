@@ -47,3 +47,5 @@ inside-ver-color=00000000
 line-ver-color=00000000
 ring-ver-color=00000000
 text-ver-color=ede3f7
+
+# vim: filetype=conf foldmethod=marker
