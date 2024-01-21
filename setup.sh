@@ -24,9 +24,18 @@ make_wallpaper() {
     )
 }
 
+__stow() {
+    (
+        cd .. && stow -R "$(basename "${SCRIPT_PATH}")"
+    )
+}
+
 main() {
     make_wallpaper "${@}"
-    unset -f make_wallpaper
+    __stow
+
+    unset SCRIPT_PATH
+    unset -f make_wallpaper __stow
 }
 main "${@}"
 unset -f main
