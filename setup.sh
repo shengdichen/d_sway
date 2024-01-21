@@ -5,6 +5,8 @@ cd "${SCRIPT_PATH}" || exit 3
 
 make_wallpaper() {
     local _wallpapers_path="${SCRIPT_PATH}/.config/sway/conf/general/components/output/wallpapers"
+    local linkname="current"
+    local _select=""
     (
         cd "${_wallpapers_path}" || exit 3
 
@@ -14,13 +16,16 @@ make_wallpaper() {
                 printf "select wallpaper: "
                 printf "\n"
                 _current="$(find "." -type f | fzf --reverse --height=37%)"
+                _select="yes"
                 ;;
             *)
                 _current="Leopard_Server.jpg"
                 ;;
         esac
 
-        ln -s -f "${_current}" "current"
+        if [ "${_select}" ] || ! [ -e "${linkname}" ]; then
+            ln -s -f "${_current}" "current"
+        fi
     )
 }
 
