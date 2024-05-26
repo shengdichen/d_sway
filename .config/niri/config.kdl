@@ -20,7 +20,7 @@ input {
 
     mouse {
         accel-speed 1.0
-        accel-profile "flat"
+        accel-profile "adaptive"
     }
 
     // Uncomment this to make the mouse warp to the center of newly focused windows.
@@ -46,13 +46,11 @@ output "HDMI-A-2" {
 // }}}
 
 layout {
-    gaps 0
+    gaps 3
 
-    // center-focused-column "on-overflow"
     center-focused-column "never"
     default-column-width { proportion 0.66667; }
 
-    // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
     preset-column-widths {
         proportion 0.33333
         proportion 0.5
@@ -60,17 +58,6 @@ layout {
 
         // fixed 1920
     }
-
-    // By default focus ring and border are rendered as a solid background rectangle
-    // behind windows. That is, they will show up through semitransparent windows.
-    // This is because windows using client-side decorations can have an arbitrary shape.
-    //
-    // If you don't like that, you should uncomment `prefer-no-csd` below.
-    // Niri will draw focus ring and border *around* windows that agree to omit their
-    // client-side decorations.
-    //
-    // Alternatively, you can override it with a window rule called
-    // `draw-border-with-background`.
 
     focus-ring {
         off
@@ -90,7 +77,7 @@ layout {
     }
 }
 
-prefer-no-csd
+spawn-at-startup "sh" "-c" "swaybg -m fill -i ~/.config/niri/wallpaper"
 
 // You can change the path where screenshots are saved.
 // A ~ at the front will be expanded to the home directory.
@@ -100,41 +87,32 @@ screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 // You can also set this to null to disable saving screenshots to disk.
 // screenshot-path null
 
-// Animation settings.
-// The wiki explains how to configure individual animations:
-// https://github.com/YaLTeR/niri/wiki/Configuration:-Animations
-animations {
-    // Uncomment to turn off all animations.
-    // off
-}
+// visual {{{
+prefer-no-csd
 
-// Window rules let you adjust behavior for individual windows.
-// Find more information on the wiki:
-// https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules
+animations {
+    // use defaults
+}
 
 window-rule {
     opacity 0.90625
 }
 
 window-rule {
-    // This regular expression is intentionally made as specific as possible,
-    // since this is the default config, and we want no false positives.
-    // You can get away with just app-id="wezterm" if you want.
     match app-id=r#"^org\.wezfurlong\.wezterm$"#
     default-column-width {}
 }
 
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
-/-window-rule {
+window-rule {
     match app-id=r#"^org\.keepassxc\.KeePassXC$"#
     match app-id=r#"^org\.gnome\.World\.Secrets$"#
 
+    // alternatively: |screencast|
     block-out-from "screen-capture"
-
-    // Use this instead if you want them visible on third-party screenshot tools.
-    // block-out-from "screencast"
 }
+// }}}
 
 binds {
     // $ niri msg action <niri_command>
@@ -150,37 +128,25 @@ binds {
 
     // focus {{{
     //  focus-window-down
-    //          Focus the window below
     //  focus-window-up
-    //          Focus the window above
-    // Mod+J     { focus-window-down; }
-    // Mod+K     { focus-window-up; }
+    //  Mod+J { focus-window-down; }
+    //  Mod+K { focus-window-up; }
 
     //  focus-column-left
-    //          Focus the column to the left
     //  focus-column-right
-    //          Focus the column to the right
     //  focus-column-first
-    //          Focus the first column
     //  focus-column-last
-    //          Focus the last column
-    Mod+H     { focus-column-left; }
-    Mod+L     { focus-column-right; }
+    Mod+H { focus-column-left; }
+    Mod+L { focus-column-right; }
     Mod+Home { focus-column-first; }
-    Mod+End  { focus-column-last; }
+    Mod+End { focus-column-last; }
 
     // workspace {{{
     //  focus-workspace-down
-    //          Focus the workspace below
     //  focus-workspace-up
-    //          Focus the workspace above
-    //  Mod+Page_Down      { focus-workspace-down; }
-    //  Mod+Page_Up        { focus-workspace-up; }
-    //  Mod+U              { focus-workspace-down; }
-    //  Mod+I              { focus-workspace-up; }
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up { focus-workspace-up; }
 
-    //  focus-workspace
-    //          Focus a workspace by reference (index or name)
     Mod+1 { focus-workspace 1; }
     Mod+2 { focus-workspace 2; }
     Mod+3 { focus-workspace 3; }
@@ -191,67 +157,49 @@ binds {
     Mod+8 { focus-workspace 8; }
     Mod+9 { focus-workspace 9; }
 
-    //  focus-workspace-previous
-    //          Focus the previous workspace
-    // Switches focus between the current and the previous workspace.
     Mod+Tab { focus-workspace-previous; }
     // }}}
 
-    // Alternative commands that move across workspaces when reaching
-    // the first or last window in a column.
+    // first within column of current workspace, then to next workspace
     //  focus-window-or-workspace-down
-    //          Focus the window or the workspace above
     //  focus-window-or-workspace-up
-    //          Focus the window or the workspace above
-    Mod+J     { focus-window-or-workspace-down; }
-    Mod+K     { focus-window-or-workspace-up; }
+    Mod+J { focus-window-or-workspace-down; }
+    Mod+K { focus-window-or-workspace-up; }
 
     // monitor {{{
     //  focus-monitor-left
-    //          Focus the monitor to the left
     //  focus-monitor-right
-    //          Focus the monitor to the right
     //  focus-monitor-down
-    //          Focus the monitor below
     //  focus-monitor-up
-    //          Focus the monitor above
-    Mod+Left  { focus-monitor-left; }
-    Mod+Down  { focus-monitor-down; }
-    Mod+Up    { focus-monitor-up; }
+    Mod+Left { focus-monitor-left; }
+    Mod+Down { focus-monitor-down; }
+    Mod+Up { focus-monitor-up; }
     Mod+Right { focus-monitor-right; }
+    Mod+A { focus-monitor-left; }
+    Mod+S { focus-monitor-down; }
+    Mod+W { focus-monitor-up; }
+    Mod+D { focus-monitor-right; }
     // }}}
     // }}}
 
     // move {{{
     // window {{{
-    //  move-window-down
-    //          Move the focused window down in a column
-    //  move-window-up
-    //          Move the focused window up in a column
-    Mod+Shift+K     { move-window-up; }
-    Mod+Shift+J     { move-window-down; }
+    // within column
+    Mod+Shift+K { move-window-up; }
+    Mod+Shift+J { move-window-down; }
 
-    //  consume-window-into-column
-    //          Consume the window to the right into the focused column
-    //  expel-window-from-column
-    //          Expel the focused window from the column
-    Mod+Comma  { consume-window-into-column; }
+    // add first window of column on the right to current column
+    Mod+Comma { consume-window-into-column; }
+    // break window from column (no-op if not in column)
     Mod+Period { expel-window-from-column; }
 
-    // There are also commands that consume or expel a single window to the side.
-    //  consume-or-expel-window-left
-    //          Consume or expel the focused window left
-    //  consume-or-expel-window-right
-    //          Consume or expel the focused window right
-    Mod+BracketLeft  { consume-or-expel-window-left; }
+    // toggle column-ness of current window
+    Mod+BracketLeft { consume-or-expel-window-left; }
     Mod+BracketRight { consume-or-expel-window-right; }
 
     //  move-window-to-workspace-down
-    //          Move the focused window to the workspace below
     //  move-window-to-workspace-up
-    //          Move the focused window to the workspace above
     //  move-window-to-workspace
-    //          Move the focused window to a workspace by reference (index or name)
     Mod+Shift+1 { move-window-to-workspace 1; }
     Mod+Shift+2 { move-window-to-workspace 2; }
     Mod+Shift+3 { move-window-to-workspace 3; }
@@ -262,24 +210,16 @@ binds {
     Mod+Shift+8 { move-window-to-workspace 8; }
     Mod+Shift+9 { move-window-to-workspace 9; }
 
+    // within column or to another workspace
     //  move-window-down-or-to-workspace-down
-    //          Move the focused window down in a column or to the workspace below
     //  move-window-up-or-to-workspace-up
-    //          Move the focused window up in a column or to the workspace above
-    // Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
-    // Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
+    // Mod+Ctrl+J { move-window-down-or-to-workspace-down; }
+    // Mod+Ctrl+K { move-window-up-or-to-workspace-up; }
 
     //  move-window-to-monitor-left
-    //          Move the focused window to the monitor to the left
     //  move-window-to-monitor-right
-    //          Move the focused window to the monitor to the right
     //  move-window-to-monitor-down
-    //          Move the focused window to the monitor below
     //  move-window-to-monitor-up
-    //          Move the focused window to the monitor above
-    // Alternatively, there are commands to move just a single window:
-    // Mod+Shift+Ctrl+Left  { move-window-to-monitor-left; }
-    // ...
     Mod+Shift+Left  { move-window-to-monitor-left; }
     Mod+Shift+Down  { move-window-to-monitor-down; }
     Mod+Shift+Up    { move-window-to-monitor-up; }
@@ -288,17 +228,13 @@ binds {
 
     // move: column {{{
     //  move-column-left
-    //          Move the focused column to the left
     //  move-column-right
-    //          Move the focused column to the right
     //  move-column-to-first
-    //          Move the focused column to the start of the workspace
     //  move-column-to-last
-    //          Move the focused column to the end of the workspace
-    Mod+Shift+H     { move-column-left; }
-    Mod+Shift+L     { move-column-right; }
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+L { move-column-right; }
     Mod+Shift+Home { move-column-to-first; }
-    Mod+Shift+End  { move-column-to-last; }
+    Mod+Shift+End { move-column-to-last; }
 
     // move: column to workspace
     //  move-column-to-workspace-down
@@ -345,18 +281,10 @@ binds {
     Mod+Shift+U         { move-workspace-down; }
     Mod+Shift+I         { move-workspace-up; }
 
-    // move: workspace to monitor
     //  move-workspace-to-monitor-left
-    //          Move the focused workspace to the monitor to the left
     //  move-workspace-to-monitor-right
-    //          Move the focused workspace to the monitor to the right
     //  move-workspace-to-monitor-down
-    //          Move the focused workspace to the monitor below
     //  move-workspace-to-monitor-up
-    //          Move the focused workspace to the monitor above
-    // And you can also move a whole workspace to another monitor:
-    // Mod+Shift+Ctrl+Left  { move-workspace-to-monitor-left; }
-    // ...
     Mod+Ctrl+Shift+Left  { move-workspace-to-monitor-left; }
     Mod+Ctrl+Shift+Down  { move-workspace-to-monitor-down; }
     Mod+Ctrl+Shift+Up    { move-workspace-to-monitor-up; }
@@ -395,8 +323,6 @@ binds {
     // }}}
 
     // misc {{{
-    // Mod+Shift+Slash { show-hotkey-overlay; }
-
     Mod+Space       { switch-layout "next"; }
     Mod+Shift+Space { switch-layout "prev"; }
 
