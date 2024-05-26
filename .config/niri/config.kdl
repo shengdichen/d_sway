@@ -7,7 +7,6 @@ layout {
 
     preset-column-widths {
         proportion 0.33333
-        proportion 0.5
         proportion 0.66667
 
         // fixed 1920
@@ -41,7 +40,33 @@ window-rule {
 prefer-no-csd
 
 animations {
-    // use defaults
+    // focus left or right
+    horizontal-view-movement {
+        duration-ms 170
+        curve "ease-out-cubic"
+    }
+
+    // move left or right
+    window-movement {
+        duration-ms 170
+        curve "ease-out-cubic"
+    }
+    window-resize {
+        duration-ms 170
+        curve "ease-out-cubic"
+    }
+
+    workspace-switch {
+        duration-ms 310
+        curve "ease-out-expo"
+    }
+
+    window-open {
+        off
+    }
+    window-close {
+        off
+    }
 }
 
 // opacity {{{
@@ -295,22 +320,6 @@ binds {
 
     Mod+Delete { power-off-monitors; }
     Mod+Shift+Delete { quit; }
-
-    // You can bind mouse wheel scroll ticks using the following syntax.
-    // These binds will change direction based on the natural-scroll setting.
-    //
-    // To avoid scrolling through workspaces really fast, you can use
-    // the cooldown-ms property. The bind will be rate-limited to this value.
-    // You can set a cooldown on any bind, but it's most useful for the wheel.
-    //  Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
-    //  Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
-    //  Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
-    //  Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
-
-    //  Mod+WheelScrollRight      { focus-column-right; }
-    //  Mod+WheelScrollLeft       { focus-column-left; }
-    //  Mod+Ctrl+WheelScrollRight { move-column-right; }
-    //  Mod+Ctrl+WheelScrollLeft  { move-column-left; }
     // }}}
 }
 // }}}
@@ -323,7 +332,6 @@ input {
     keyboard {
         xkb {
             layout "us,ch(fr),ru(phonetic)"
-            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
             options "caps:escape,lv2:lsgt_switch"
         }
         track-layout "global"
