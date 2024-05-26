@@ -1,52 +1,6 @@
-// input {{{
-input {
-    keyboard {
-        xkb {
-            layout "us,ch(fr),ru(phonetic)"
-            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
-            options "caps:escape,lv2:lsgt_switch"
-        }
-        track-layout "global"
-    }
-
-    touchpad {
-        tap
-        dwt
-        dwtp
-        natural-scroll
-        accel-speed 1.0
-        accel-profile "flat"
-    }
-
-    mouse {
-        accel-speed 1.0
-        accel-profile "adaptive"
-    }
-
-    // Uncomment this to make the mouse warp to the center of newly focused windows.
-    // warp-mouse-to-focus
-}
-// }}}
-
-// output {{{
-// $ niri msg outputs
-// off
-// variable-refresh-rate
-
-output "DP-2" {
-    mode "3840x2160@59.997"
-    position x=0 y=0
-}
-
-output "HDMI-A-2" {
-    mode "2560x1440@74.968"
-    transform "270"
-    position x=9000 y=0
-}
-// }}}
-
+// layout {{{
 layout {
-    gaps 3
+    gaps 1
 
     center-focused-column "never"
     default-column-width { proportion 0.66667; }
@@ -77,15 +31,11 @@ layout {
     }
 }
 
-spawn-at-startup "sh" "-c" "swaybg -m fill -i ~/.config/niri/wallpaper"
-
-// You can change the path where screenshots are saved.
-// A ~ at the front will be expanded to the home directory.
-// The path is formatted with strftime(3) to give you the screenshot date and time.
-screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
-
-// You can also set this to null to disable saving screenshots to disk.
-// screenshot-path null
+window-rule {
+    match app-id="org.wezfurlong.wezterm"
+    default-column-width {}
+}
+// }}}
 
 // visual {{{
 prefer-no-csd
@@ -94,28 +44,60 @@ animations {
     // use defaults
 }
 
+// opacity {{{
+// REF:
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules#is-focused
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules#opacity
+
 window-rule {
+    opacity 1.0
+}
+window-rule {
+    match is-focused=false
     opacity 0.90625
 }
 
+// always opaque
 window-rule {
-    match app-id=r#"^org\.wezfurlong\.wezterm$"#
-    default-column-width {}
+    match app-id="\\?"
+    match app-id="lyx"
+    match app-id="org.qutebrowser.qutebrowser"
+    match app-id=r"^firefox.*$"
+
+    opacity 0.90625
 }
 
-// Example: block out two password managers from screen capture.
-// (This example rule is commented out with a "/-" in front.)
+// never opaque
 window-rule {
-    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
-    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+    match app-id="imv"
+
+    opacity 1.0
+}
+// }}}
+
+cursor {
+    // xcursor-theme "capitaine-cursors-light"
+    xcursor-theme "capitaine-cursors"
+    xcursor-size 24
+}
+
+// REF:
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules#block-out-from
+window-rule {
+    match app-id="org.keepassxc.KeePassXC"
+    match app-id="org.gnome.World.Secrets"
 
     // alternatively: |screencast|
     block-out-from "screen-capture"
 }
 // }}}
 
+// bind {{{
 binds {
-    // $ niri msg action <niri_command>
+    //  <KEY> { <niri_command>; }
+    //  ->  $ niri msg action <niri_command>
+    //  <KEY> { spawn "sh" "-c" "<shell_cmd>"; }
+    //  <KEY> { spawn <executable>; }
 
     Mod+Return { spawn "foot"; }
     // You can also use a shell:
@@ -124,7 +106,7 @@ binds {
     //  Mod+D { spawn "fuzzel"; }
     //  Super+Alt+L { spawn "swaylock"; }
 
-    Mod+Q { close-window; }
+    Mod+q { close-window; }
 
     // focus {{{
     //  focus-window-down
@@ -185,8 +167,8 @@ binds {
     // move {{{
     // window {{{
     // within column
-    Mod+Shift+K { move-window-up; }
-    Mod+Shift+J { move-window-down; }
+    //  Mod+Shift+K { move-window-up; }
+    //  Mod+Shift+J { move-window-down; }
 
     // add first window of column on the right to current column
     Mod+Comma { consume-window-into-column; }
@@ -210,11 +192,11 @@ binds {
     Mod+Shift+8 { move-window-to-workspace 8; }
     Mod+Shift+9 { move-window-to-workspace 9; }
 
-    // within column or to another workspace
+    // first within column of current workspace, then to next workspace
     //  move-window-down-or-to-workspace-down
     //  move-window-up-or-to-workspace-up
-    // Mod+Ctrl+J { move-window-down-or-to-workspace-down; }
-    // Mod+Ctrl+K { move-window-up-or-to-workspace-up; }
+    Mod+Shift+J { move-window-down-or-to-workspace-down; }
+    Mod+Shift+K { move-window-up-or-to-workspace-up; }
 
     //  move-window-to-monitor-left
     //  move-window-to-monitor-right
@@ -226,7 +208,7 @@ binds {
     Mod+Shift+Right { move-window-to-monitor-right; }
     // }}}
 
-    // move: column {{{
+    // column {{{
     //  move-column-left
     //  move-column-right
     //  move-column-to-first
@@ -238,66 +220,48 @@ binds {
 
     // move: column to workspace
     //  move-column-to-workspace-down
-    //          Move the focused column to the workspace below
     //  move-column-to-workspace-up
-    //          Move the focused column to the workspace above
     Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
-    Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
-    Mod+Ctrl+U         { move-column-to-workspace-down; }
-    Mod+Ctrl+I         { move-column-to-workspace-up; }
+    Mod+Ctrl+Page_Up { move-column-to-workspace-up; }
+    Mod+Ctrl+U { move-column-to-workspace-down; }
+    Mod+Ctrl+I { move-column-to-workspace-up; }
     //  move-column-to-workspace
-    //          Move the focused column to a workspace by reference (index or name)
-    // Mod+Shift+1 { move-column-to-workspace 1; }
-    // Mod+Shift+2 { move-column-to-workspace 2; }
-    // Mod+Shift+3 { move-column-to-workspace 3; }
-    // Mod+Shift+4 { move-column-to-workspace 4; }
-    // Mod+Shift+5 { move-column-to-workspace 5; }
-    // Mod+Shift+6 { move-column-to-workspace 6; }
-    // Mod+Shift+7 { move-column-to-workspace 7; }
-    // Mod+Shift+8 { move-column-to-workspace 8; }
-    // Mod+Shift+9 { move-column-to-workspace 9; }
+    //  Mod+Shift+1 { move-column-to-workspace 1; }
+    //  Mod+Shift+2 { move-column-to-workspace 2; }
+    //  Mod+Shift+3 { move-column-to-workspace 3; }
+    //  Mod+Shift+4 { move-column-to-workspace 4; }
+    //  Mod+Shift+5 { move-column-to-workspace 5; }
+    //  Mod+Shift+6 { move-column-to-workspace 6; }
+    //  Mod+Shift+7 { move-column-to-workspace 7; }
+    //  Mod+Shift+8 { move-column-to-workspace 8; }
+    //  Mod+Shift+9 { move-column-to-workspace 9; }
 
     //  move-column-to-monitor-left
-    //          Move the focused column to the monitor to the left
     //  move-column-to-monitor-right
-    //          Move the focused column to the monitor to the right
     //  move-column-to-monitor-down
-    //          Move the focused column to the monitor below
     //  move-column-to-monitor-up
-    //          Move the focused column to the monitor above
-    Mod+Ctrl+Left  { move-column-to-monitor-left; }
-    Mod+Ctrl+Down  { move-column-to-monitor-down; }
-    Mod+Ctrl+Up    { move-column-to-monitor-up; }
+    Mod+Ctrl+Left { move-column-to-monitor-left; }
+    Mod+Ctrl+Down { move-column-to-monitor-down; }
+    Mod+Ctrl+Up { move-column-to-monitor-up; }
     Mod+Ctrl+Right { move-column-to-monitor-right; }
     // }}}
 
-    // move: workspace {{{
+    // workspace {{{
     //  move-workspace-down
-    //          Move the focused workspace down
     //  move-workspace-up
-    //          Move the focused workspace up
     Mod+Shift+Page_Down { move-workspace-down; }
-    Mod+Shift+Page_Up   { move-workspace-up; }
-    Mod+Shift+U         { move-workspace-down; }
-    Mod+Shift+I         { move-workspace-up; }
+    Mod+Shift+Page_Up { move-workspace-up; }
 
     //  move-workspace-to-monitor-left
     //  move-workspace-to-monitor-right
     //  move-workspace-to-monitor-down
     //  move-workspace-to-monitor-up
-    Mod+Ctrl+Shift+Left  { move-workspace-to-monitor-left; }
-    Mod+Ctrl+Shift+Down  { move-workspace-to-monitor-down; }
-    Mod+Ctrl+Shift+Up    { move-workspace-to-monitor-up; }
+    Mod+Ctrl+Shift+Left { move-workspace-to-monitor-left; }
+    Mod+Ctrl+Shift+Down { move-workspace-to-monitor-down; }
+    Mod+Ctrl+Shift+Up { move-workspace-to-monitor-up; }
     Mod+Ctrl+Shift+Right { move-workspace-to-monitor-right; }
     // }}}
     // }}}
-
-
-
-
-
-
-
 
     // resize {{{
     Mod+R { switch-preset-column-width; }
@@ -316,51 +280,21 @@ binds {
     //  set-column-width "100" will make the column occupy 200 physical screen pixels.
     Mod+Minus { set-column-width "-10%"; }
     Mod+Equal { set-column-width "+10%"; }
-
-    // Finer height adjustments when in column with other windows.
     Mod+Shift+Minus { set-window-height "-10%"; }
     Mod+Shift+Equal { set-window-height "+10%"; }
     // }}}
 
     // misc {{{
-    Mod+Space       { switch-layout "next"; }
+    // keyboard layout
+    Mod+Space { switch-layout "next"; }
     Mod+Shift+Space { switch-layout "prev"; }
 
-    Print { screenshot; }
-    Ctrl+Print { screenshot-screen; }
-    Alt+Print { screenshot-window; }
+    Mod+Print { screenshot; }
+    Mod+Ctrl+Print { screenshot-screen; }
+    Mod+Alt+Print { screenshot-window; }
 
-    // The quit action will show a confirmation dialog to avoid accidental exits.
-    Mod+Shift+E { quit; }
-
-    // Powers off the monitors. To turn them back on, do any input like
-    // moving the mouse or pressing any other key.
-    Mod+Shift+P { power-off-monitors; }
-
-    // Example volume keys mappings for PipeWire & WirePlumber.
-    // The allow-when-locked=true property makes them work even when the session is locked.
-    //  XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"; }
-    //  XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"; }
-    //  XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    //  XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
-
-    // Usually scrolling up and down with Shift in applications results in
-    // horizontal scrolling; these binds replicate that.
-    Mod+Shift+WheelScrollDown      { focus-column-right; }
-    Mod+Shift+WheelScrollUp        { focus-column-left; }
-    Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
-    Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
-
-    // Similarly, you can bind touchpad scroll "ticks".
-    // Touchpad scrolling is continuous, so for these binds it is split into
-    // discrete intervals.
-    // These binds are also affected by touchpad's natural-scroll, so these
-    // example binds are "inverted", since we have natural-scroll enabled for
-    // touchpads by default.
-    // Mod+TouchpadScrollDown { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02+"; }
-    // Mod+TouchpadScrollUp   { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.02-"; }
-
-
+    Mod+Delete { power-off-monitors; }
+    Mod+Shift+Delete { quit; }
 
     // You can bind mouse wheel scroll ticks using the following syntax.
     // These binds will change direction based on the natural-scroll setting.
@@ -379,11 +313,61 @@ binds {
     //  Mod+Ctrl+WheelScrollLeft  { move-column-left; }
     // }}}
 }
+// }}}
 
-cursor {
-    // xcursor-theme "capitaine-cursors-light"
-    xcursor-theme "capitaine-cursors"
-    xcursor-size 24
+// misc {{{
+spawn-at-startup "~/.config/niri/wallpaper.sh"
+
+// input {{{
+input {
+    keyboard {
+        xkb {
+            layout "us,ch(fr),ru(phonetic)"
+            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
+            options "caps:escape,lv2:lsgt_switch"
+        }
+        track-layout "global"
+    }
+
+    touchpad {
+        tap
+        dwt
+        dwtp
+        natural-scroll
+        accel-speed 1.0
+        accel-profile "flat"
+    }
+
+    mouse {
+        accel-speed 1.0
+        accel-profile "adaptive"
+    }
+
+    disable-power-key-handling
 }
+// }}}
+
+// output {{{
+// $ niri msg outputs
+// off
+// variable-refresh-rate
+
+output "DP-2" {
+    mode "3840x2160@59.997"
+    position x=0 y=0
+}
+
+output "HDMI-A-2" {
+    mode "2560x1440@74.968"
+    transform "270"
+    position x=9000 y=0
+}
+// }}}
+
+// REF:
+//  $ man strftime
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Miscellaneous#screenshot-path
+screenshot-path "~/xdg/MDA/Pic/%Y-%m-%d--%H-%M-%S.png"
+// }}}
 
 // vim: foldmethod=marker
