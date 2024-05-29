@@ -26,6 +26,7 @@ __titles() {
 
     hyprctl -j clients |
         jq --raw-output ".[] | .title" |
+        grep --invert-match "throwaway" |
         fzf --multi --reverse |
         __escape_for_regex |
         __match_exact
