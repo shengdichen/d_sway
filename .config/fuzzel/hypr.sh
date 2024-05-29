@@ -28,7 +28,16 @@ __window_previous() {
     )"
 }
 
-__titles() {
+__fzf() {
+    local _multi="${1}"
+    if [ "${_multi}" ]; then
+        fzf --reverse --multi
+    else
+        fzf --reverse
+    fi || exit 3
+}
+
+__windows_by_title() {
     local _multi=""
     if [ "${1}" = "--multi" ]; then
         shift
@@ -50,22 +59,31 @@ __titles() {
         sed "s/\(.*\)/^\1$/"
     }
 
-    __fzf() {
-        if [ "${_multi}" ]; then
-            fzf --reverse --multi
-        else
-            fzf --reverse
-        fi
-    }
-
     hyprctl -j clients |
         jq --raw-output ".[] | .title" |
         grep --invert-match "throwaway" |
-        __fzf |
+        __fzf "${_multi}" |
         __escape_for_regex |
         __match_exact |
         while read -r _line; do
             printf "title:%s\n" "${_line}"
+        done
+}
+
+__windows_by_addr() {
+    local _multi=""
+    if [ "${1}" = "--multi" ]; then
+        shift
+        _multi="yes"
+    fi
+
+    hyprctl -j clients |
+        jq --raw-output ".[] | [.title, .address] | \"\(.[0])  [__ADDR__: \(.[1])]\"" |
+        grep --invert-match "throwaway" |
+        __fzf "${_multi}" |
+        sed "s/^.*\[__ADDR__: \(.*\)\]$/\1/" |
+        while read -r _line; do
+            printf "address:%s\n" "${_line}"
         done
 }
 
@@ -105,18 +123,18 @@ __main() {
     _ws="$(__workspace_curr)"
     case "${_mode}" in
         "append")
-            local _title
-            __titles --multi | while read -r _title; do
-                __move_window_to_workspace "${_title}" "${_ws}"
+            local _win
+            __windows_by_addr --multi | while read -r _win; do
+                __move_window_to_workspace "${_win}" "${_ws}"
             done
             ;;
         "replace")
             local _w_curr
             _w_curr="$(__window_previous)"
 
-            local _title
-            _title="$(__titles)"
-            __move_window_to_workspace "${_title}" "${_ws}"
+            local _win
+            _win="$(__windows_by_addr)"
+            __move_window_to_workspace "${_win}" "${_ws}"
             __move_window_to_hold "${_w_curr}"
             ;;
     esac
