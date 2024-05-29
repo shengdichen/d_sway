@@ -97,6 +97,9 @@ __windows_by_addr() {
 }
 
 __move_window_to_workspace() {
+    # NOTE:
+    #   not suitable for (batch-) moving multiple windows
+
     hyprctl dispatch movetoworkspace "${2}","${1}"
 }
 
@@ -136,7 +139,7 @@ __main() {
         "append")
             local _win
             __windows_by_addr --multi | while read -r _win; do
-                __move_window_to_workspace "${_win}" "${_ws}"
+                __move_window_to_workspace_no_switch "${_win}" "${_ws}"
             done
             ;;
         "replace")
