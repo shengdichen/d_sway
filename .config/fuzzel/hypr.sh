@@ -43,7 +43,7 @@ __fzf() {
         fzf --reverse --multi
     else
         fzf --reverse
-    fi || exit 3
+    fi
 }
 
 __windows_by_title() {
@@ -145,6 +145,9 @@ __main() {
 
             local _win
             _win="$(__windows_by_addr)"
+            if [ ! "${_win}" ]; then
+                exit 3
+            fi
             __move_window_to_workspace "${_win}" "${_ws}"
             __move_window_to_hold "${_w_curr}"
             ;;
