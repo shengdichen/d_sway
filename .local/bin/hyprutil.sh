@@ -1,9 +1,9 @@
 #!/usr/bin/env dash
 
 __run_float() {
-    hyprctl dispatch exec "[float]" foot "${@}"
+    hyprctl dispatch exec "[float]" footclient "${@}"
 }
 
 __run() {
-    hyprctl dispatch exec foot "${@}"
+    hyprctl dispatch exec footclient "${@}"
 }
