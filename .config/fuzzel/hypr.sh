@@ -30,6 +30,13 @@ __window_previous() {
     )"
 }
 
+__is_empty_workspace() {
+    # NOTE:
+    #   highly finicky: returns 0 or 1
+
+    [ "$(hyprctl -j activeworkspace | jq --raw-output ".windows")" -lt 2 ]
+}
+
 __fzf() {
     local _multi="${1}"
     if [ "${_multi}" ]; then
@@ -102,24 +109,26 @@ __move_window_to_hold() {
 }
 
 __main() {
-    local _mode=""
-    while true; do
-        printf "hypr> mode? [r]eplace (default); [a]ppend "
-        read -r _mode
-        case "${_mode}" in
-            "r" | "R" | "")
-                _mode="replace"
-                break
-                ;;
-            "a" | "A")
-                _mode="append"
-                break
-                ;;
-            *)
-                printf "hypr> huh? aka, what is [%s]?\n\n" "${_mode}"
-                ;;
-        esac
-    done
+    local _mode="append"
+    if ! __is_empty_workspace; then
+        while true; do
+            printf "hypr> mode? [r]eplace (default); [a]ppend "
+            read -r _mode
+            case "${_mode}" in
+                "r" | "R" | "")
+                    _mode="replace"
+                    break
+                    ;;
+                "a" | "A")
+                    _mode="append"
+                    break
+                    ;;
+                *)
+                    printf "hypr> huh? aka, what is [%s]?\n\n" "${_mode}"
+                    ;;
+            esac
+        done
+    fi
 
     local _ws
     _ws="$(__workspace_curr)"
