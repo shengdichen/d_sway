@@ -1,5 +1,7 @@
 #!/usr/bin/env dash
 
+WORKSPACE_HOLD="special:HOLD"
+
 __workspaces() {
     hyprctl -j workspaces | jq --raw-output ".[] | .name" | fzf --reverse
 }
@@ -78,7 +80,7 @@ __windows_by_addr() {
     fi
 
     hyprctl -j clients |
-        jq --raw-output ".[] | [.title, .address] | \"\(.[0])  [__ADDR__: \(.[1])]\"" |
+        jq --raw-output ".[] | select (.workspace.name == \"${WORKSPACE_HOLD}\") | [.title, .address] | \"\(.[0])  [__ADDR__: \(.[1])]\"" |
         grep --invert-match "throwaway" |
         __fzf "${_multi}" |
         sed "s/^.*\[__ADDR__: \(.*\)\]$/\1/" |
@@ -96,7 +98,7 @@ __move_window_to_workspace_no_switch() {
 }
 
 __move_window_to_hold() {
-    __move_window_to_workspace_no_switch "${1}" "special:HOLD"
+    __move_window_to_workspace_no_switch "${1}" "${WORKSPACE_HOLD}"
 }
 
 __main() {
