@@ -10,14 +10,20 @@ __workspace_curr() {
     hyprctl -j activeworkspace | jq --raw-output ".name"
 }
 
+__is_workspace_hold() {
+    # NOTE:
+    #   must use |activewindow|, since |activeworkspace| returns non-special workspaces only
+    [ "$(hyprctl -j activewindow | jq --raw-output ".workspace.name")" = "${WORKSPACE_HOLD}" ]
+}
+
 __window_active() {
     # NOTE:
     #   focusHistoryID == 0
     # NOTE:
     # alternative implementation:
-    #   printf "address:%s\n" "$(hyprctl -j activeworkspace | jq --raw-output ".lastwindow")"
+    #   hyprctl -j activeworkspace | jq --raw-output ".lastwindow"
 
-    printf "address:%s\n" "$(hyprctl -j activewindow | jq --raw-output ".address")"
+    hyprctl -j activewindow | jq --raw-output ".address"
 }
 
 __window_previous() {
@@ -146,6 +152,15 @@ __move_window_to_hold() {
 }
 
 __main() {
+    if [ "${1}" = "--to-hold" ]; then
+        shift
+        if __is_workspace_hold; then
+            return
+        fi
+        __move_window_to_hold "$(__window_active)"
+        return
+    fi
+
     local _mode="append"
     if ! __is_empty_workspace; then
         while true; do
