@@ -24,10 +24,7 @@ __window_previous() {
     # NOTE:
     #   focusHistoryID == 1
 
-    printf "address:%s\n" "$(
-        hyprctl -j clients |
-            jq --raw-output ".[] | select (.focusHistoryID == 1) | .address"
-    )"
+    hyprctl -j clients | jq --raw-output ".[] | select (.focusHistoryID == 1) | .address"
 }
 
 __is_empty_workspace() {
@@ -90,25 +87,62 @@ __windows_by_addr() {
         jq --raw-output ".[] | select (.workspace.name == \"${WORKSPACE_HOLD}\") | [.title, .address] | \"\(.[0])  [__ADDR__: \(.[1])]\"" |
         grep --invert-match "throwaway" |
         __fzf "${_multi}" |
-        sed "s/^.*\[__ADDR__: \(.*\)\]$/\1/" |
-        while read -r _line; do
-            printf "address:%s\n" "${_line}"
-        done
+        sed "s/^.*\[__ADDR__: \(.*\)\]$/\1/"
+}
+
+__is_grouped() {
+    [ "$(hyprctl -j clients | jq --raw-output ".[] | select (.address == \"${1}\") | .grouped")" != "[]" ]
+}
+
+__windows_grouped() {
+    hyprctl -j clients | jq --raw-output ".[] | select (.grouped != []) | .address"
+}
+
+__engroup() {
+    if __is_grouped "${1}"; then
+        return
+    fi
+
+    hyprctl dispatch focuswindow "address:${1}"
+    local _dir
+    for _dir in "l" "r" "u" "d"; do
+        hyprctl dispatch moveintogroup "${_dir}"
+        if __is_grouped "${1}"; then
+            break
+        fi
+    done
+    if ! __is_grouped "${1}"; then
+        printf "hypr> still NOT grouped [%s]\n" "${1}"
+        read -r _
+    fi
+    hyprctl dispatch focuscurrentorlast
+}
+
+__degroup() {
+    if ! __is_grouped "${1}"; then
+        return
+    fi
+    hyprctl dispatch moveoutofgroup "address:${1}"
+    hyprctl dispatch focuscurrentorlast # |moveoutofgroup| will auto-focus the workspace
 }
 
 __move_window_to_workspace() {
     # NOTE:
     #   not suitable for (batch-) moving multiple windows
 
-    hyprctl dispatch movetoworkspace "${2}","${1}"
+    __degroup "${1}"
+    hyprctl dispatch movetoworkspace "${2},address:${1}"
 }
 
 __move_window_to_workspace_no_switch() {
-    hyprctl dispatch movetoworkspacesilent "${2}","${1}"
+    __degroup "${1}"
+    hyprctl dispatch movetoworkspacesilent "${2},address:${1}"
 }
 
 __move_window_to_hold() {
+    __degroup "${1}"
     __move_window_to_workspace_no_switch "${1}" "${WORKSPACE_HOLD}"
+    __engroup "${1}"
 }
 
 __main() {
