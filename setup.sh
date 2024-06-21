@@ -3,7 +3,7 @@
 SCRIPT_PATH="$(realpath "$(dirname "${0}")")"
 cd "${SCRIPT_PATH}" || exit 3
 
-WALLPAPER_PATH="${HOME}/xdg/MDA/Pic/wallpapers"
+WALLPAPER_PATH="${HOME}/xyz/MDA/Pic/wallpapers"
 ADHOC_PATH="${SCRIPT_PATH}/.config/sway/conf/components/adhoc"
 
 __stow() {

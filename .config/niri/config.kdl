@@ -375,7 +375,7 @@ output "HDMI-A-2" {
 // REF:
 //  $ man strftime
 //  https://github.com/YaLTeR/niri/wiki/Configuration:-Miscellaneous#screenshot-path
-screenshot-path "~/xdg/MDA/Pic/%Y-%m-%d--%H-%M-%S.png"
+screenshot-path "~/xyz/MDA/Pic/%Y-%m-%d--%H-%M-%S.png"
 // }}}
 
 // vim: foldmethod=marker
