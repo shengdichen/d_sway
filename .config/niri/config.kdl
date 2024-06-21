@@ -1,0 +1,381 @@
+// layout {{{
+layout {
+    gaps 1
+
+    center-focused-column "never"
+    default-column-width { proportion 0.66667; }
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.66667
+
+        // fixed 1920
+    }
+
+    focus-ring {
+        off
+        active-color "#97879f"
+        inactive-color "#2b272f"
+    }
+    border {
+        off
+        active-color "#97879f"
+        inactive-color "#2b272f"
+    }
+    struts {
+        left 0
+        right 0
+        top 0
+        bottom 0
+    }
+}
+
+window-rule {
+    match app-id="org.wezfurlong.wezterm"
+    default-column-width {}
+}
+// }}}
+
+// visual {{{
+prefer-no-csd
+
+animations {
+    // focus left or right
+    horizontal-view-movement {
+        duration-ms 170
+        curve "ease-out-cubic"
+    }
+
+    // move left or right
+    window-movement {
+        duration-ms 170
+        curve "ease-out-cubic"
+    }
+    window-resize {
+        duration-ms 170
+        curve "ease-out-cubic"
+    }
+
+    workspace-switch {
+        duration-ms 310
+        curve "ease-out-expo"
+    }
+
+    window-open {
+        off
+    }
+    window-close {
+        off
+    }
+}
+
+// opacity {{{
+// REF:
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules#is-focused
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules#opacity
+
+window-rule {
+    opacity 1.0
+}
+window-rule {
+    match is-focused=false
+    opacity 0.90625
+}
+
+// always opaque
+window-rule {
+    match app-id="\\?"
+    match app-id="lyx"
+    match app-id="org.qutebrowser.qutebrowser"
+    match app-id=r"^firefox.*$"
+
+    opacity 0.90625
+}
+
+// never opaque
+window-rule {
+    match app-id="imv"
+
+    opacity 1.0
+}
+// }}}
+
+cursor {
+    // xcursor-theme "capitaine-cursors-light"
+    xcursor-theme "capitaine-cursors"
+    xcursor-size 24
+}
+
+// REF:
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules#block-out-from
+window-rule {
+    match app-id="org.keepassxc.KeePassXC"
+    match app-id="org.gnome.World.Secrets"
+
+    // alternatively: |screencast|
+    block-out-from "screen-capture"
+}
+// }}}
+
+// bind {{{
+binds {
+    //  <KEY> { <niri_command>; }
+    //  ->  $ niri msg action <niri_command>
+    //  <KEY> { spawn "sh" "-c" "<shell_cmd>"; }
+    //  <KEY> { spawn <executable>; }
+
+    Mod+Return { spawn "foot"; }
+    // You can also use a shell:
+    // <KEY> { spawn "bash" "-c" "<cmd>"; }
+    // <KEY> { spawn "bash" "-c" "<cmd>"; }
+    //  Mod+D { spawn "fuzzel"; }
+    //  Super+Alt+L { spawn "swaylock"; }
+
+    Mod+q { close-window; }
+
+    // focus {{{
+    //  focus-window-down
+    //  focus-window-up
+    //  Mod+J { focus-window-down; }
+    //  Mod+K { focus-window-up; }
+
+    //  focus-column-left
+    //  focus-column-right
+    //  focus-column-first
+    //  focus-column-last
+    Mod+H { focus-column-left; }
+    Mod+L { focus-column-right; }
+    Mod+Home { focus-column-first; }
+    Mod+End { focus-column-last; }
+
+    // workspace {{{
+    //  focus-workspace-down
+    //  focus-workspace-up
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up { focus-workspace-up; }
+
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    Mod+Tab { focus-workspace-previous; }
+    // }}}
+
+    // first within column of current workspace, then to next workspace
+    //  focus-window-or-workspace-down
+    //  focus-window-or-workspace-up
+    Mod+J { focus-window-or-workspace-down; }
+    Mod+K { focus-window-or-workspace-up; }
+
+    // monitor {{{
+    //  focus-monitor-left
+    //  focus-monitor-right
+    //  focus-monitor-down
+    //  focus-monitor-up
+    Mod+Left { focus-monitor-left; }
+    Mod+Down { focus-monitor-down; }
+    Mod+Up { focus-monitor-up; }
+    Mod+Right { focus-monitor-right; }
+    Mod+A { focus-monitor-left; }
+    Mod+S { focus-monitor-down; }
+    Mod+W { focus-monitor-up; }
+    Mod+D { focus-monitor-right; }
+    // }}}
+    // }}}
+
+    // move {{{
+    // window {{{
+    // within column
+    //  Mod+Shift+K { move-window-up; }
+    //  Mod+Shift+J { move-window-down; }
+
+    // add first window of column on the right to current column
+    Mod+Comma { consume-window-into-column; }
+    // break window from column (no-op if not in column)
+    Mod+Period { expel-window-from-column; }
+
+    // toggle column-ness of current window
+    Mod+BracketLeft { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    //  move-window-to-workspace-down
+    //  move-window-to-workspace-up
+    //  move-window-to-workspace
+    Mod+Shift+1 { move-window-to-workspace 1; }
+    Mod+Shift+2 { move-window-to-workspace 2; }
+    Mod+Shift+3 { move-window-to-workspace 3; }
+    Mod+Shift+4 { move-window-to-workspace 4; }
+    Mod+Shift+5 { move-window-to-workspace 5; }
+    Mod+Shift+6 { move-window-to-workspace 6; }
+    Mod+Shift+7 { move-window-to-workspace 7; }
+    Mod+Shift+8 { move-window-to-workspace 8; }
+    Mod+Shift+9 { move-window-to-workspace 9; }
+
+    // first within column of current workspace, then to next workspace
+    //  move-window-down-or-to-workspace-down
+    //  move-window-up-or-to-workspace-up
+    Mod+Shift+J { move-window-down-or-to-workspace-down; }
+    Mod+Shift+K { move-window-up-or-to-workspace-up; }
+
+    //  move-window-to-monitor-left
+    //  move-window-to-monitor-right
+    //  move-window-to-monitor-down
+    //  move-window-to-monitor-up
+    Mod+Shift+Left  { move-window-to-monitor-left; }
+    Mod+Shift+Down  { move-window-to-monitor-down; }
+    Mod+Shift+Up    { move-window-to-monitor-up; }
+    Mod+Shift+Right { move-window-to-monitor-right; }
+    // }}}
+
+    // column {{{
+    //  move-column-left
+    //  move-column-right
+    //  move-column-to-first
+    //  move-column-to-last
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+L { move-column-right; }
+    Mod+Shift+Home { move-column-to-first; }
+    Mod+Shift+End { move-column-to-last; }
+
+    // move: column to workspace
+    //  move-column-to-workspace-down
+    //  move-column-to-workspace-up
+    Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up { move-column-to-workspace-up; }
+    Mod+Ctrl+U { move-column-to-workspace-down; }
+    Mod+Ctrl+I { move-column-to-workspace-up; }
+    //  move-column-to-workspace
+    //  Mod+Shift+1 { move-column-to-workspace 1; }
+    //  Mod+Shift+2 { move-column-to-workspace 2; }
+    //  Mod+Shift+3 { move-column-to-workspace 3; }
+    //  Mod+Shift+4 { move-column-to-workspace 4; }
+    //  Mod+Shift+5 { move-column-to-workspace 5; }
+    //  Mod+Shift+6 { move-column-to-workspace 6; }
+    //  Mod+Shift+7 { move-column-to-workspace 7; }
+    //  Mod+Shift+8 { move-column-to-workspace 8; }
+    //  Mod+Shift+9 { move-column-to-workspace 9; }
+
+    //  move-column-to-monitor-left
+    //  move-column-to-monitor-right
+    //  move-column-to-monitor-down
+    //  move-column-to-monitor-up
+    Mod+Ctrl+Left { move-column-to-monitor-left; }
+    Mod+Ctrl+Down { move-column-to-monitor-down; }
+    Mod+Ctrl+Up { move-column-to-monitor-up; }
+    Mod+Ctrl+Right { move-column-to-monitor-right; }
+    // }}}
+
+    // workspace {{{
+    //  move-workspace-down
+    //  move-workspace-up
+    Mod+Shift+Page_Down { move-workspace-down; }
+    Mod+Shift+Page_Up { move-workspace-up; }
+
+    //  move-workspace-to-monitor-left
+    //  move-workspace-to-monitor-right
+    //  move-workspace-to-monitor-down
+    //  move-workspace-to-monitor-up
+    Mod+Ctrl+Shift+Left { move-workspace-to-monitor-left; }
+    Mod+Ctrl+Shift+Down { move-workspace-to-monitor-down; }
+    Mod+Ctrl+Shift+Up { move-workspace-to-monitor-up; }
+    Mod+Ctrl+Shift+Right { move-workspace-to-monitor-right; }
+    // }}}
+    // }}}
+
+    // resize {{{
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { reset-window-height; }
+    Mod+Grave { maximize-column; }
+    Mod+Shift+Grave { fullscreen-window; }
+    Mod+F { center-column; }
+
+    // NOTE:
+    //  pixel, absolute: "100"
+    //  pixel, relative: "-+5"
+    //  percent, absolute: "25%"
+    //  percent, relative: "+-5%"
+    // NOTE:
+    //  Pixel sizes use logical, or scaled, pixels. I.e. on an output with scale 2.0,
+    //  set-column-width "100" will make the column occupy 200 physical screen pixels.
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+    // }}}
+
+    // misc {{{
+    // keyboard layout
+    Mod+Space { switch-layout "next"; }
+    Mod+Shift+Space { switch-layout "prev"; }
+
+    Mod+Print { screenshot; }
+    Mod+Ctrl+Print { screenshot-screen; }
+    Mod+Alt+Print { screenshot-window; }
+
+    Mod+Delete { power-off-monitors; }
+    Mod+Shift+Delete { quit; }
+    // }}}
+}
+// }}}
+
+// misc {{{
+spawn-at-startup "~/.config/niri/wallpaper.sh"
+
+// input {{{
+input {
+    keyboard {
+        xkb {
+            layout "us,ch(fr),ru(phonetic)"
+            options "caps:escape,lv2:lsgt_switch"
+        }
+        track-layout "global"
+    }
+
+    touchpad {
+        tap
+        dwt
+        dwtp
+        natural-scroll
+        accel-speed 1.0
+        accel-profile "flat"
+    }
+
+    mouse {
+        accel-speed 1.0
+        accel-profile "adaptive"
+    }
+
+    disable-power-key-handling
+}
+// }}}
+
+// output {{{
+// $ niri msg outputs
+// off
+// variable-refresh-rate
+
+output "DP-2" {
+    mode "3840x2160@59.997"
+    position x=0 y=0
+}
+
+output "HDMI-A-2" {
+    mode "2560x1440@74.968"
+    transform "270"
+    position x=9000 y=0
+}
+// }}}
+
+// REF:
+//  $ man strftime
+//  https://github.com/YaLTeR/niri/wiki/Configuration:-Miscellaneous#screenshot-path
+screenshot-path "~/xdg/MDA/Pic/%Y-%m-%d--%H-%M-%S.png"
+// }}}
+
+// vim: foldmethod=marker

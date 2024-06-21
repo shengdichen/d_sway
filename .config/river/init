@@ -1,0 +1,12 @@
+#!/usr/bin/env dash
+
+SCRIPT_PATH="$(realpath "$(dirname "${0}")")"
+cd "${SCRIPT_PATH}" || exit 3
+
+"./default.sh"
+
+riverctl default-layout rivertile
+rivertile \
+    -view-padding 0 -outer-padding 0 \
+    -main-ratio 0.37 \
+    &
