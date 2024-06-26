@@ -1,0 +1,31 @@
+import logging
+import pathlib
+import sys
+import typing
+
+from abstraction import Holding, Launch
+
+logger = logging.getLogger(__name__)
+
+
+def main(mode: typing.Optional[str] = None):
+    if mode == "push":
+        Holding().push()
+    elif mode == "pull-in-place":
+        Holding().pull()
+    elif mode == "pull":
+        cmd = f"python {pathlib.Path(__file__).resolve()} pull-in-place"
+        Launch.launch_foot(cmd)
+    else:
+        raise RuntimeError("what mode?")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(module)s [%(levelname)s]> %(message)s", level=logging.INFO
+    )
+
+    if len(sys.argv) == 1:
+        raise FloatingPointError("what mode? [push or pull?]")
+
+    main(sys.argv[1])
