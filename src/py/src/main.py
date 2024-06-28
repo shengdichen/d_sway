@@ -3,18 +3,19 @@ import pathlib
 import sys
 import typing
 
-from abstraction import Holding, Launch
+import hold
+from abstraction import Launch
 
 logger = logging.getLogger(__name__)
 
 
 def main(mode: typing.Optional[str] = None):
     if mode == "push":
-        Holding().push()
+        hold.Holding().push()
     elif mode == "pull-terminal-curr":
-        Holding().pull(terminal_current=True)
+        hold.Holding().pull(terminal_current=True)
     elif mode == "pull-terminal-new":
-        Holding().pull(terminal_current=False)
+        hold.Holding().pull(terminal_current=False)
     elif mode == "pull":
         cmd = f"python {pathlib.Path(__file__).resolve()} pull-terminal-new"
         Launch.launch_foot(cmd)

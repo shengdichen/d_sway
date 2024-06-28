@@ -1,0 +1,144 @@
+import collections.abc as cabc
+import logging
+import pathlib
+import re
+import sys
+import typing
+
+import abstraction
+import fzf
+import launch
+import talk
+
+
+class Holding:
+    def __init__(self):
+        self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
+
+        self._name_hold = abstraction.HyprWorkspace.name_from_special("HOLD")
+
+    def push(self, window_curr: typing.Optional[abstraction.HyprWindow] = None) -> None:
+        window_curr = window_curr or abstraction.HyprWindow.from_current()
+
+        try:
+            window_prev = Holding.window_previous_non_hold()
+        except RuntimeError:
+            window_prev = None
+
+        self._to_hold(window_curr)
+
+        if window_prev:
+            abstraction.HyprWindow.focus(window_prev)  # focus only if non-hold
+
+    def _to_hold(
+        self, window: abstraction.HyprWindow, unfocus_apres: bool = True
+    ) -> None:
+        is_empty_hold = self._is_empty_hold()
+        window.move_window_to_workspace(self._name_hold)
+        if is_empty_hold:
+            window.group_on_toggle()
+        else:
+            window.group_on_move()
+
+        if unfocus_apres:
+            Holding.workspace_hold_toggle()
+
+    @staticmethod
+    def window_previous_non_hold() -> abstraction.HyprWindow:
+        windows = abstraction.HyprWindow.windows(sort_by_focus=True)
+        next(windows)  # pop the first (current) window
+
+        for window in windows:
+            if not window.workspace.is_workspace_hold():
+                return window
+
+        raise RuntimeError("hold> no previous non-hold window")
+
+    def _is_empty_hold(self) -> bool:
+        try:
+            abstraction.HyprWorkspace.from_hold()
+        except ValueError:
+            return True
+        return False
+
+    @staticmethod
+    def workspace_hold_toggle() -> None:
+        talk.HyprTalk("togglespecialworkspace HOLD").execute_as_dispatch()
+
+    def pull(self, terminal_current: bool = False) -> None:
+        while True:
+            mode = input("hypr> mode? [a]ppend (default); [r]eplace ")
+            if not mode or mode == "a":
+                self.pull_append()
+                break
+            if mode == "r":
+                self.pull_replace(terminal_current=terminal_current)
+                break
+            print(f"hypr> huh? what is [{mode}]?\n")
+
+    def pull_append(self) -> None:
+        for window in self.select_multi():
+            window.group_off_move()
+            window.move_to_current()
+
+    def select_multi(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
+        for choice in fzf.Fzf(fzf_height_perc=100).choose_multi(self._choices()):
+            yield abstraction.HyprWindow.from_address(
+                self._pattern.match(choice).group(1)
+            )
+
+    def pull_replace(self, terminal_current: bool = False) -> None:
+        workspace = (
+            abstraction.HyprWorkspace.from_current()
+        )  # must get current workspace a priori
+
+        if terminal_current:
+            window_curr = abstraction.HyprWindow.from_current()
+        else:
+            try:
+                window_curr = Holding.window_previous_non_hold()
+            except RuntimeError:
+                window_curr = None
+
+        window = self.select()
+
+        if window_curr:
+            self._to_hold(window_curr)
+        window.group_off_move()
+        window.move_window_to_workspace(workspace)
+
+    def select(self) -> abstraction.HyprWindow:
+        choice = fzf.Fzf(fzf_height_perc=100).choose_one(self._choices())
+        return abstraction.HyprWindow.from_address(self._pattern.match(choice).group(1))
+
+    def _choices(self) -> cabc.Sequence[str]:
+        return [w.selection_prompt() for w in self._windows()]
+
+    def _windows(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
+        for j in abstraction.HyprWindow.windows_json(sort_by_focus=True):
+            if j["workspace"]["name"] == self._name_hold:
+                yield abstraction.HyprWindow.from_json(j)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(module)s [%(levelname)s]> %(message)s", level=logging.INFO
+    )
+
+    if len(sys.argv) == 1:
+        raise FloatingPointError("what mode? [push or pull?]")
+
+    def main(mode: typing.Optional[str] = None) -> None:
+        if mode == "push":
+            Holding().push()
+        elif mode == "pull-terminal-curr":
+            Holding().pull(terminal_current=True)
+        elif mode == "pull-terminal-new":
+            Holding().pull(terminal_current=False)
+        elif mode == "pull":
+            cmd = f"python {pathlib.Path(__file__).resolve()} pull-terminal-new"
+            launch.Launch.launch_foot(cmd)
+        else:
+            raise RuntimeError("what mode?")
+
+    main(sys.argv[1])
