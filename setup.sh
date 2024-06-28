@@ -8,9 +8,14 @@ ADHOC_PATH="${SCRIPT_PATH}/.config/sway/conf/components/adhoc"
 
 __stow() {
     mkdir -p "${WALLPAPER_PATH}"
+    local _config_hypr="${HOME}/.config/hypr"
+    mkdir -p "${_config_hypr}"
 
     (
         cd .. && stow -R "$(basename "${SCRIPT_PATH}")"
+    )
+    (
+        cd "${_config_hypr}" && ln -s -f "${SCRIPT_PATH}/src/py/src" .
     )
 }
 
