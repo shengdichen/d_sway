@@ -1,7 +1,7 @@
 import collections.abc as cabc
 import typing
 
-from talk import HyprTalk
+import talk
 
 
 class HyprMonitor:
@@ -104,7 +104,7 @@ class HyprMonitor:
 
     @staticmethod
     def monitors_json() -> cabc.Sequence[dict]:
-        return HyprTalk("monitors").execute_to_json()
+        return talk.HyprTalk("monitors").execute_to_json()
 
     @classmethod
     def from_id(cls, _id: int) -> "HyprMonitor":
@@ -178,7 +178,7 @@ class HyprWorkspace:
 
     @classmethod
     def from_current(cls) -> "HyprWorkspace":
-        return cls.from_json(HyprTalk("activeworkspace").execute_to_json())
+        return cls.from_json(talk.HyprTalk("activeworkspace").execute_to_json())
 
     @classmethod
     def from_id(cls, _id: int) -> "HyprWorkspace":
@@ -217,7 +217,7 @@ class HyprWorkspace:
 
     @staticmethod
     def workspaces_json() -> cabc.Sequence[dict]:
-        return HyprTalk("workspaces").execute_to_json()
+        return talk.HyprTalk("workspaces").execute_to_json()
 
     def is_workspace_hold(self) -> bool:
         return self._name == "special:HOLD"
@@ -333,14 +333,14 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def windows_json(sort_by_focus: bool = True) -> cabc.Sequence[dict]:
-        jsons = HyprTalk("clients").execute_to_json()
+        jsons = talk.HyprTalk("clients").execute_to_json()
         if not sort_by_focus:
             return jsons
         return sorted(jsons, key=lambda j: j["focusHistoryID"])
 
     @classmethod
     def from_current(cls) -> "HyprWindow":
-        return cls.from_json(HyprTalk("activewindow").execute_to_json())
+        return cls.from_json(talk.HyprTalk("activewindow").execute_to_json())
 
     @classmethod
     def from_address(cls, address: int) -> "HyprWindow":
@@ -387,14 +387,14 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             workspace = workspace.name
         cmd = "movetoworkspacesilent" if silent else "movetoworkspace"
         cmd = f"{cmd} {workspace},address:{self._address}"
-        HyprTalk(cmd).execute_as_dispatch()
+        talk.HyprTalk(cmd).execute_as_dispatch()
 
     def group_on_toggle(self) -> None:
         if self.is_grouped():
             return
 
         HyprWindow.focus(self)  # must focus before grouping
-        HyprTalk("togglegroup").execute_as_dispatch()
+        talk.HyprTalk("togglegroup").execute_as_dispatch()
 
     def group_on_move(self) -> None:
         if self.is_grouped():
@@ -403,7 +403,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         HyprWindow.focus(self)  # must focus before grouping
         addr = self._address
         for d in "lrud":
-            HyprTalk(f"moveintogroup {d}").execute_as_dispatch()
+            talk.HyprTalk(f"moveintogroup {d}").execute_as_dispatch()
             if HyprWindow.from_address(addr).is_grouped():
                 return
         raise RuntimeError(f"group> still not in group [{self._title}]")
@@ -413,13 +413,13 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             return
 
         HyprWindow.focus(self)  # must focus before grouping
-        HyprTalk("togglegroup").execute_as_dispatch()
+        talk.HyprTalk("togglegroup").execute_as_dispatch()
 
     def group_off_move(self) -> None:
         if not self.is_grouped():
             return
 
-        HyprTalk(f"moveoutofgroup address:{self._address}").execute_as_dispatch()
+        talk.HyprTalk(f"moveoutofgroup address:{self._address}").execute_as_dispatch()
 
     def is_grouped(self) -> bool:
         if not self._grouped:
@@ -428,7 +428,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def focus(window: "HyprWindow") -> None:
-        HyprTalk(f"focuswindow address:{window.address}").execute_as_dispatch()
+        talk.HyprTalk(f"focuswindow address:{window.address}").execute_as_dispatch()
 
     def move_to_current(self, silent: bool = True) -> None:
         self.move_window_to_workspace(HyprWorkspace.from_current(), silent=silent)
@@ -437,12 +437,12 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     @staticmethod
     def fullscreen_on() -> None:
         if not HyprWindow.from_current().is_fullscreen:
-            HyprTalk("fullscreen").execute_as_dispatch()
+            talk.HyprTalk("fullscreen").execute_as_dispatch()
 
     @staticmethod
     def fullscreen_off() -> None:
         if HyprWindow.from_current().is_fullscreen:
-            HyprTalk("fullscreen").execute_as_dispatch()
+            talk.HyprTalk("fullscreen").execute_as_dispatch()
 
     def selection_prompt(self) -> str:
         return f"{self._title} [ADDR: {self._address}]"
