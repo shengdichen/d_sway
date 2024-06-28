@@ -11,10 +11,12 @@ logger = logging.getLogger(__name__)
 def main(mode: typing.Optional[str] = None):
     if mode == "push":
         Holding().push()
-    elif mode == "pull-in-place":
-        Holding().pull()
+    elif mode == "pull-terminal-curr":
+        Holding().pull(terminal_current=True)
+    elif mode == "pull-terminal-new":
+        Holding().pull(terminal_current=False)
     elif mode == "pull":
-        cmd = f"python {pathlib.Path(__file__).resolve()} pull-in-place"
+        cmd = f"python {pathlib.Path(__file__).resolve()} pull-terminal-new"
         Launch.launch_foot(cmd)
     else:
         raise RuntimeError("what mode?")

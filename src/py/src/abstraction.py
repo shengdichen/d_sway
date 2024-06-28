@@ -487,16 +487,21 @@ class Holding:
         except RuntimeError:
             window_prev = None
 
-        is_empty_hold = self._is_empty_hold()
-        window_curr.move_window_to_workspace(self._name_hold)
-        if is_empty_hold:
-            window_curr.group_on_toggle()
-        else:
-            window_curr.group_on_move()
+        self._to_hold(window_curr)
 
-        HyprTalk("togglespecialworkspace HOLD").execute_as_dispatch()
         if window_prev:
             HyprWindow.focus(window_prev)  # focus only if non-hold
+
+    def _to_hold(self, window: HyprWindow, unfocus_apres: bool = True) -> None:
+        is_empty_hold = self._is_empty_hold()
+        window.move_window_to_workspace(self._name_hold)
+        if is_empty_hold:
+            window.group_on_toggle()
+        else:
+            window.group_on_move()
+
+        if unfocus_apres:
+            Holding.workspace_hold_toggle()
 
     @staticmethod
     def window_previous_non_hold() -> HyprWindow:
@@ -516,18 +521,22 @@ class Holding:
             return True
         return False
 
-    def pull(self) -> None:
+    @staticmethod
+    def workspace_hold_toggle() -> None:
+        HyprTalk("togglespecialworkspace HOLD").execute_as_dispatch()
+
+    def pull(self, terminal_current: bool = False) -> None:
         while True:
             mode = input("hypr> mode? [a]ppend (default); [r]eplace ")
             if not mode or mode == "a":
-                self.append()
+                self.pull_append()
                 break
             if mode == "r":
-                self.replace()
+                self.pull_replace(terminal_current=terminal_current)
                 break
             print(f"hypr> huh? what is [{mode}]?\n")
 
-    def append(self) -> None:
+    def pull_append(self) -> None:
         for window in self.select_multi():
             window.group_off_move()
             window.move_to_current()
@@ -536,14 +545,23 @@ class Holding:
         for choice in Fzf(fzf_height_perc=100).choose_multi(self._choices()):
             yield HyprWindow.from_address(self._pattern.match(choice).group(1))
 
-    def replace(self) -> None:
-        window_curr = HyprWindow.from_current()
+    def pull_replace(self, terminal_current: bool = False) -> None:
+        workspace = HyprWorkspace.from_current()  # must get current workspace a priori
+
+        if terminal_current:
+            window_curr = HyprWindow.from_current()
+        else:
+            try:
+                window_curr = Holding.window_previous_non_hold()
+            except RuntimeError:
+                window_curr = None
 
         window = self.select()
-        window.group_off_move()
-        window.move_to_current()
 
-        self.push(window_curr)
+        if window_curr:
+            self._to_hold(window_curr)
+        window.group_off_move()
+        window.move_window_to_workspace(workspace)
 
     def select(self) -> HyprWindow:
         choice = Fzf(fzf_height_perc=100).choose_one(self._choices())
