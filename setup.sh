@@ -12,6 +12,9 @@ __stow() {
     (
         cd .. && stow -R "$(basename "${SCRIPT_PATH}")"
     )
+    (
+        cd "${HOME}/.config/hypr" && ln -s -f "${SCRIPT_PATH}/src/py/src" .
+    )
 }
 
 __wallpaper() {
