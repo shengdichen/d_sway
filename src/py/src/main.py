@@ -4,7 +4,7 @@ import sys
 import typing
 
 import hold
-from abstraction import Launch
+import launch
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def main(mode: typing.Optional[str] = None):
         hold.Holding().pull(terminal_current=False)
     elif mode == "pull":
         cmd = f"python {pathlib.Path(__file__).resolve()} pull-terminal-new"
-        Launch.launch_foot(cmd)
+        launch.Launch.launch_foot(cmd)
     else:
         raise RuntimeError("what mode?")
 
