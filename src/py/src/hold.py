@@ -34,7 +34,10 @@ class Holding:
         self, window: abstraction.HyprWindow, unfocus_apres: bool = True
     ) -> None:
         is_empty_hold = self._is_empty_hold()
+
+        window.fullscreen_off()
         window.move_window_to_workspace(self._name_hold)
+
         if is_empty_hold:
             window.group_on_toggle()
         else:
