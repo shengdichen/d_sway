@@ -231,6 +231,8 @@ class HyprWorkspace:
             f"({self._last_active_window_id}: {self._last_active_window_title})"
         )
 
+    def windows(self) -> cabc.Generator["HyprWindow", None, None]:
+        yield from HyprWindow.windows(workspace=self)
 
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
@@ -326,10 +328,18 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @classmethod
     def windows(
-        cls, sort_by_focus: bool = True
+        cls,
+        workspace: typing.Optional[HyprWorkspace] = None,
+        sort_by_focus: bool = True,
     ) -> cabc.Generator["HyprWindow", None, None]:
-        for j in cls.windows_json(sort_by_focus=sort_by_focus):
-            yield cls.from_json(j)
+        if workspace:
+            wid = workspace.id
+            for j in cls.windows_json(sort_by_focus=sort_by_focus):
+                if j["workspace"]["id"] == wid:
+                    yield cls.from_json(j)
+        else:
+            for j in cls.windows_json(sort_by_focus=sort_by_focus):
+                yield cls.from_json(j)
 
     @staticmethod
     def windows_json(sort_by_focus: bool = True) -> cabc.Sequence[dict]:
@@ -372,6 +382,18 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             if window.is_on_monitor(mid):
                 return window
 
+        raise RuntimeError("window> no previous window")
+
+    @classmethod
+    def from_previous_relative(
+        cls,
+        relative_to: typing.Optional["HyprWindow"] = None,
+    ) -> "HyprWindow":
+        relative_to = relative_to or cls.from_current()
+        idx_focus = relative_to.idx_focus + 1
+        for window in cls.windows(sort_by_focus=True):
+            if window.idx_focus == idx_focus:
+                return window
         raise RuntimeError("window> no previous window")
 
     def is_on_monitor(self, monitor_id: int) -> bool:
