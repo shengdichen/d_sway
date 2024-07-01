@@ -104,14 +104,19 @@ class Holding:
                 window_curr = None
 
         window = self.select()
+        if not window:
+            return
 
         if window_curr:
             self._to_hold(window_curr)
         window.group_off_move()
         window.move_window_to_workspace(workspace)
 
-    def select(self) -> abstraction.HyprWindow:
-        choice = fzf.Fzf(fzf_height_perc=100).choose_one(self._choices())
+    def select(self) -> abstraction.HyprWindow | None:
+        try:
+            choice = fzf.Fzf(fzf_height_perc=100).choose_one(self._choices())
+        except RuntimeError:
+            return None
         return abstraction.HyprWindow.from_address(self._pattern.match(choice).group(1))
 
     def _choices(self) -> cabc.Sequence[str]:

@@ -13,7 +13,9 @@ class Fzf:
             self._config_fzf = f"{self._config_fzf} --reverse"
 
     def _exec(
-        self, choices: typing.Sequence[str], config_fzf_extra: str
+        self,
+        choices: typing.Sequence[str],
+        config_fzf_extra: typing.Optional[str] = None,
     ) -> cabc.Sequence[str]:
         config_fzf = (
             f"{self._config_fzf} {config_fzf_extra}"
@@ -33,7 +35,10 @@ class Fzf:
                     return [line.rstrip() for line in f]
 
     def choose_one(self, choices: typing.Sequence[str]) -> str:
-        return self._exec(choices, self._config_fzf)[0]
+        choices = self._exec(choices)
+        if not choices:
+            raise RuntimeError("fzf/single> nothing chosen")
+        return choices[0]
 
     def choose_multi(self, choices: typing.Sequence[str]) -> cabc.Sequence[str]:
         return self._exec(choices, config_fzf_extra="--multi")
