@@ -1,1 +1,5 @@
 .config/sway/conf/components/adhoc
+
+__pycache__/
+*.py[cod]
+*$py.class
