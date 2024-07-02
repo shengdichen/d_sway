@@ -1,5 +1,7 @@
 .config/sway/conf/components/adhoc
 
+**/wallpaper
+
 __pycache__/
 *.py[cod]
 *$py.class
