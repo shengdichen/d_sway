@@ -95,22 +95,37 @@ class Holding:
             abstraction.HyprWorkspace.from_current()
         )  # must get current workspace a priori
 
+        window_terminal = None
         if terminal_current:
             window_curr = abstraction.HyprWindow.from_current()
         else:
+            window_terminal = abstraction.HyprWindow.from_current()
             try:
                 window_curr = Holding.window_previous_non_hold()
             except RuntimeError:
                 window_curr = None
 
+        is_master = False
+        if workspace.n_windows > 1:
+            if window_curr.is_master(restore_focus=False):
+                is_master = True
+            if window_terminal:
+                abstraction.HyprWindow.focus(window_terminal)
+
         window = self.select()
         if not window:
+            if window_curr:
+                # restore focus during possible is_master check(s)
+                abstraction.HyprWindow.focus(window_curr)
             return
 
         if window_curr:
             self._to_hold(window_curr)
         window.group_off_move()
         window.move_window_to_workspace(workspace)
+        if is_master:
+            while not window.is_master():
+                window.swap_within_workspace(positive_dir=False)
 
     def select(self) -> abstraction.HyprWindow | None:
         try:

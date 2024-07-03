@@ -234,6 +234,15 @@ class HyprWorkspace:
     def windows(self) -> cabc.Generator["HyprWindow", None, None]:
         yield from HyprWindow.windows(workspace=self)
 
+    @staticmethod
+    def focus_master() -> None:
+        return talk.HyprTalk("layoutmsg focusmaster master").execute_as_dispatch()
+
+    @staticmethod
+    def window_master() -> "HyprWindow":
+        HyprWorkspace.focus_master()
+        return HyprWindow.from_current()
+
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
     def __init__(
@@ -468,3 +477,13 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     def selection_prompt(self) -> str:
         return f"{self._title} [ADDR: {self._address}]"
+
+    def is_master(self, restore_focus: bool = True) -> bool:
+        is_master = self.address == HyprWorkspace.window_master().address
+        if not is_master and restore_focus:
+            HyprWindow.focus(self)
+        return is_master
+
+    def swap_within_workspace(self, positive_dir: bool = True) -> None:
+        cmd = "layoutmsg swapnext" if positive_dir else "layoutmsg swapprev"
+        talk.HyprTalk(cmd).execute_as_dispatch()

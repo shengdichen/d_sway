@@ -19,6 +19,9 @@ class TestAbstraction:
         abstraction.HyprWindow.from_previous().print()
         abstraction.HyprWindow.from_previous_relative().print()
 
+    def test_is_master(self) -> None:
+        print(abstraction.HyprWindow.from_current().is_master())
+
 
 class TestHolding:
     def test_pull_append(self) -> None:
