@@ -47,13 +47,18 @@ class Holding:
             Holding.workspace_hold_toggle()
 
     @staticmethod
-    def window_previous_non_hold() -> abstraction.HyprWindow:
+    def window_previous_non_hold(
+        workspace: typing.Optional[abstraction.HyprWorkspace] = None,
+    ) -> abstraction.HyprWindow:
         windows = abstraction.HyprWindow.windows(sort_by_focus=True)
         next(windows)  # pop the first (current) window
 
         for window in windows:
             if not window.workspace.is_workspace_hold():
-                return window
+                if not workspace:
+                    return window
+                if window.is_in_workspace(workspace):
+                    return window
 
         raise RuntimeError("hold> no previous non-hold window")
 
@@ -101,7 +106,7 @@ class Holding:
         else:
             window_terminal = abstraction.HyprWindow.from_current()
             try:
-                window_curr = Holding.window_previous_non_hold()
+                window_curr = Holding.window_previous_non_hold(workspace=workspace)
             except RuntimeError:
                 window_curr = None
 

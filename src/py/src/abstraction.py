@@ -408,6 +408,9 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def is_on_monitor(self, monitor_id: int) -> bool:
         return self._monitor.id == monitor_id
 
+    def is_in_workspace(self, workspace: HyprWorkspace) -> bool:
+        return self._workspace.id == workspace.id
+
     def move_window_to_workspace(
         self,
         workspace: HyprWorkspace | str,
