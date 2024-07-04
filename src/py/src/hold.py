@@ -162,7 +162,7 @@ if __name__ == "__main__":
     )
 
     if len(sys.argv) == 1:
-        raise FloatingPointError("what mode? [push or pull?]")
+        raise RuntimeError("hypr/hold> say what?")
 
     def main(mode: typing.Optional[str] = None) -> None:
         if mode == "push":
