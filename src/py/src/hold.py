@@ -154,13 +154,28 @@ if __name__ == "__main__":
     def main(mode: typing.Optional[str] = None) -> None:
         if mode == "push":
             Holding().push()
-        elif mode == "pull-terminal-curr":
-            Holding().pull(terminal_current=True)
-        elif mode == "pull-terminal-new":
+
+        elif mode == "pull-append-cmd":
+            Holding().pull_append()
+        elif mode == "pull-append":
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
+            launch.Launch.launch_foot(cmd)
+
+        elif mode == "pull-replace-cmd":
+            Holding().pull_replace(terminal_current=False)
+        elif mode == "pull-replace":
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
+            launch.Launch.launch_foot(cmd)
+
+        elif mode == "pull-cmd":
             Holding().pull(terminal_current=False)
         elif mode == "pull":
-            cmd = f"python {pathlib.Path(__file__).resolve()} pull-terminal-new"
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+
+        elif mode == "pull-inplace":
+            Holding().pull(terminal_current=True)
+
         else:
             raise RuntimeError("what mode?")
 
