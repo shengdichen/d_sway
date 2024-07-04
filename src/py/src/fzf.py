@@ -5,12 +5,24 @@ import typing
 
 
 class Fzf:
-    def __init__(self, fzf_reverse: bool = True, fzf_height_perc: int = 37):
+    def __init__(
+        self,
+        fzf_reverse: bool = True,
+        fzf_height_perc: int = 100,
+        fzf_no_sort: bool = False,
+        fzf_tiebreak: str = "",
+    ):
         self._fzf = "fzf"
 
-        self._config_fzf = f"--height={fzf_height_perc}%"
+        self._config_fzf = ""
         if fzf_reverse:
             self._config_fzf = f"{self._config_fzf} --reverse"
+        if fzf_height_perc:
+            self._config_fzf = f"{self._config_fzf} --height={fzf_height_perc}%"
+        if fzf_no_sort:
+            self._config_fzf = f"{self._config_fzf} --no-sort"
+        if fzf_tiebreak:
+            self._config_fzf = f"{self._config_fzf} --tiebreak={fzf_tiebreak}"
 
     def _exec(
         self,

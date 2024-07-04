@@ -14,6 +14,7 @@ import talk
 class Holding:
     def __init__(self):
         self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
+        self._fzf = fzf.Fzf(fzf_tiebreak="index")
 
         self._name_hold = abstraction.HyprWorkspace.name_from_special("HOLD")
 
@@ -98,7 +99,7 @@ class Holding:
             window.move_to_current()
 
     def select_multi(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
-        for choice in fzf.Fzf(fzf_height_perc=100).choose_multi(self._choices()):
+        for choice in self._fzf.choose_multi(self._choices()):
             yield abstraction.HyprWindow.from_address(
                 self._pattern.match(choice).group(1)
             )
@@ -144,7 +145,7 @@ class Holding:
 
     def select(self) -> abstraction.HyprWindow | None:
         try:
-            choice = fzf.Fzf(fzf_height_perc=100).choose_one(self._choices())
+            choice = self._fzf.choose_one(self._choices())
         except RuntimeError:
             return None
         return abstraction.HyprWindow.from_address(self._pattern.match(choice).group(1))
