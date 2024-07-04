@@ -62,6 +62,14 @@ class Holding:
 
         raise RuntimeError("hold> no previous non-hold window")
 
+    @staticmethod
+    def focus_previous() -> abstraction.HyprWindow:
+        try:
+            window = Holding.window_previous_non_hold()
+        except RuntimeError:
+            return
+        abstraction.HyprWindow.focus(window)
+
     def _is_empty_hold(self) -> bool:
         try:
             abstraction.HyprWorkspace.from_hold()
