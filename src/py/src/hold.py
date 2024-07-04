@@ -81,14 +81,14 @@ class Holding:
     def workspace_hold_toggle() -> None:
         talk.HyprTalk("togglespecialworkspace HOLD").execute_as_dispatch()
 
-    def pull(self, terminal_current: bool = False) -> None:
+    def pull(self, use_adhoc_terminal: bool = True) -> None:
         while True:
             mode = input("hypr> mode? [a]ppend (default); [r]eplace ")
             if not mode or mode == "a":
                 self.pull_append()
                 break
             if mode == "r":
-                self.pull_replace(terminal_current=terminal_current)
+                self.pull_replace(use_adhoc_terminal=use_adhoc_terminal)
                 break
             print(f"hypr> huh? what is [{mode}]?\n")
 
@@ -103,23 +103,23 @@ class Holding:
                 self._pattern.match(choice).group(1)
             )
 
-    def pull_replace(self, terminal_current: bool = False) -> None:
+    def pull_replace(self, use_adhoc_terminal: bool = True) -> None:
         workspace = (
             abstraction.HyprWorkspace.from_current()
         )  # must get current workspace a priori
 
         try:
             window_curr = (
-                abstraction.HyprWindow.from_current_workspace(workspace)
-                if terminal_current
-                else Holding.window_previous_non_hold(workspace=workspace)
+                Holding.window_previous_non_hold(workspace=workspace)
+                if use_adhoc_terminal
+                else abstraction.HyprWindow.from_current_workspace(workspace)
             )
         except RuntimeError:
             self.pull_append()  # no current window to replace, append instead
             return
 
         window_terminal = (
-            None if terminal_current else abstraction.HyprWindow.from_current()
+            abstraction.HyprWindow.from_current() if use_adhoc_terminal else None
         )
 
         is_master = False
@@ -177,19 +177,19 @@ if __name__ == "__main__":
             launch.Launch.launch_foot(cmd)
 
         elif mode == "pull-replace-cmd":
-            Holding().pull_replace(terminal_current=False)
+            Holding().pull_replace()
         elif mode == "pull-replace":
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
 
         elif mode == "pull-cmd":
-            Holding().pull(terminal_current=False)
+            Holding().pull()
         elif mode == "pull":
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
 
         elif mode == "pull-inplace":
-            Holding().pull(terminal_current=True)
+            Holding().pull(use_adhoc_terminal=True)
 
         else:
             raise RuntimeError("what mode?")
