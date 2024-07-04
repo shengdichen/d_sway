@@ -362,6 +362,14 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         return cls.from_json(talk.HyprTalk("activewindow").execute_to_json())
 
     @classmethod
+    def from_current_workspace(cls, workspace: HyprWorkspace) -> "HyprWindow":
+        workspace_id = workspace.id
+        for j in cls.windows_json():
+            if j["workspace"]["id"] == workspace_id:
+                return cls.from_json(j)
+        raise RuntimeError(f"window> window not found [workspace: {workspace.id}]")
+
+    @classmethod
     def from_address(cls, address: int) -> "HyprWindow":
         for j in cls.windows_json():
             if j["address"] == address:

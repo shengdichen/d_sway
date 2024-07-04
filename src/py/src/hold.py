@@ -110,7 +110,7 @@ class Holding:
 
         try:
             window_curr = (
-                abstraction.HyprWindow.from_current()
+                abstraction.HyprWindow.from_current_workspace(workspace)
                 if terminal_current
                 else Holding.window_previous_non_hold(workspace=workspace)
             )
