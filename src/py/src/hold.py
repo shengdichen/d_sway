@@ -26,6 +26,7 @@ class Holding:
         except RuntimeError:
             window_prev = None
 
+        window_curr.float_off()
         self._to_hold(window_curr)
 
         if window_prev:

@@ -486,6 +486,14 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         if HyprWindow.from_current().is_fullscreen:
             talk.HyprTalk("fullscreen").execute_as_dispatch()
 
+    def float_on(self) -> None:
+        if not self._floating:
+            talk.HyprTalk("togglefloating").execute_as_dispatch()
+
+    def float_off(self) -> None:
+        if self._floating:
+            talk.HyprTalk("togglefloating").execute_as_dispatch()
+
     def selection_prompt(self) -> str:
         return f"{self._title} [ADDR: {self._address}]"
 
