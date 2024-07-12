@@ -87,17 +87,34 @@ class Holding:
         while True:
             mode = input("hypr> mode? [a]ppend (default); [r]eplace ")
             if not mode or mode == "a":
-                self.pull_append()
+                self.pull_append(use_adhoc_terminal=use_adhoc_terminal)
                 break
             if mode == "r":
                 self.pull_replace(use_adhoc_terminal=use_adhoc_terminal)
                 break
             print(f"hypr> huh? what is [{mode}]?\n")
 
-    def pull_append(self) -> None:
+    def pull_append(self, use_adhoc_terminal: bool = True) -> None:
+        workspace = abstraction.HyprWorkspace.from_current()
+        window_curr = None
+        try:
+            window_curr = (
+                Holding.window_previous_non_hold(workspace=workspace)
+                if use_adhoc_terminal
+                else abstraction.HyprWindow.from_current_workspace(workspace)
+            )
+        except RuntimeError:
+            pass
+        is_fullscreen_avant = False
+        if window_curr:
+            is_fullscreen_avant = window_curr.is_fullscreen
+
         for window in self.select_multi():
             window.group_off_move()
             window.move_to_current()
+
+        if is_fullscreen_avant:
+            abstraction.HyprWindow.fullscreen_toggle()
 
     def select_multi(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
         for choice in self._fzf.choose_multi(self._choices()):
@@ -116,9 +133,10 @@ class Holding:
                 if use_adhoc_terminal
                 else abstraction.HyprWindow.from_current_workspace(workspace)
             )
-        except RuntimeError:
-            self.pull_append()  # no current window to replace, append instead
+        except RuntimeError:  # no current window to replace, append instead
+            self.pull_append(use_adhoc_terminal=use_adhoc_terminal)
             return
+        is_fullscreen_avant = window_curr.is_fullscreen
 
         window_terminal = (
             abstraction.HyprWindow.from_current() if use_adhoc_terminal else None
@@ -143,6 +161,8 @@ class Holding:
         if is_master:
             while not window.is_master():
                 window.swap_within_workspace(positive_dir=False)
+        if is_fullscreen_avant:
+            abstraction.HyprWindow.fullscreen_toggle()
 
     def select(self) -> abstraction.HyprWindow | None:
         try:

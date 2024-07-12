@@ -476,15 +476,17 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self.move_window_to_workspace(HyprWorkspace.from_current(), silent=silent)
         HyprWindow.focus(self)
 
-    @staticmethod
-    def fullscreen_on() -> None:
-        if not HyprWindow.from_current().is_fullscreen:
-            talk.HyprTalk("fullscreen").execute_as_dispatch()
+    def fullscreen_on(self) -> None:
+        if not self._is_fullscreen:
+            HyprWindow.fullscreen_toggle()
+
+    def fullscreen_off(self) -> None:
+        if self._is_fullscreen:
+            HyprWindow.fullscreen_toggle()
 
     @staticmethod
-    def fullscreen_off() -> None:
-        if HyprWindow.from_current().is_fullscreen:
-            talk.HyprTalk("fullscreen").execute_as_dispatch()
+    def fullscreen_toggle() -> None:
+        talk.HyprTalk("fullscreen 1").execute_as_dispatch()
 
     def float_on(self) -> None:
         if not self._floating:
