@@ -13,10 +13,11 @@ import talk
 
 class Holding:
     def __init__(self):
+        self._name = "HOLD"
+        self._name_workspace = abstraction.HyprWorkspace.name_from_special(self._name)
+
         self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
         self._fzf = fzf.Fzf(fzf_tiebreak="index")
-
-        self._name_hold = abstraction.HyprWorkspace.name_from_special("HOLD")
 
     def push(self, window_curr: typing.Optional[abstraction.HyprWindow] = None) -> None:
         window_curr = window_curr or abstraction.HyprWindow.from_current()
@@ -38,7 +39,7 @@ class Holding:
         is_empty_hold = self._is_empty_hold()
 
         window.fullscreen_off()
-        window.move_window_to_workspace(self._name_hold)
+        window.move_window_to_workspace(self._name_workspace)
 
         if is_empty_hold:
             window.group_on_toggle()
@@ -46,7 +47,7 @@ class Holding:
             window.group_on_move()
 
         if unfocus_apres:
-            Holding.workspace_hold_toggle()
+            self.workspace_hold_toggle()
 
     @staticmethod
     def window_previous_non_hold(
@@ -72,6 +73,16 @@ class Holding:
             return
         abstraction.HyprWindow.focus(window)
 
+    def move_to_monitor_current(self) -> None:
+        try:
+            workspace = abstraction.HyprWorkspace.from_name(self._name_workspace)
+        except ValueError:
+            return
+
+        if workspace.monitor.id != abstraction.HyprMonitor.from_current().id:
+            self.workspace_hold_toggle()
+            self.workspace_hold_toggle()
+
     def _is_empty_hold(self) -> bool:
         try:
             abstraction.HyprWorkspace.from_hold()
@@ -79,9 +90,8 @@ class Holding:
             return True
         return False
 
-    @staticmethod
-    def workspace_hold_toggle() -> None:
-        talk.HyprTalk("togglespecialworkspace HOLD").execute_as_dispatch()
+    def workspace_hold_toggle(self) -> None:
+        talk.HyprTalk(f"togglespecialworkspace {self._name}").execute_as_dispatch()
 
     def pull(self, use_adhoc_terminal: bool = True) -> None:
         while True:
@@ -176,7 +186,7 @@ class Holding:
 
     def _windows(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
         for j in abstraction.HyprWindow.windows_json(sort_by_focus=True):
-            if j["workspace"]["name"] == self._name_hold:
+            if j["workspace"]["name"] == self._name_workspace:
                 yield abstraction.HyprWindow.from_json(j)
 
 
