@@ -485,8 +485,9 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             HyprWindow.fullscreen_toggle()
 
     @staticmethod
-    def fullscreen_toggle() -> None:
-        talk.HyprTalk("fullscreen 1").execute_as_dispatch()
+    def fullscreen_toggle(keep_decoration: bool = True) -> None:
+        mode = 1 if keep_decoration else 0
+        talk.HyprTalk(f"fullscreen {mode}").execute_as_dispatch()
 
     def float_on(self) -> None:
         if not self._floating:
