@@ -49,6 +49,6 @@ class HyprTalk:
                 res_b += r
 
         res = res_b.decode()
-        if res == b"unknown request":
+        if res == "unknown request":
             raise ValueError(f"talk> invalid command [{cmd}]")
         return res
