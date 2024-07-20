@@ -236,7 +236,7 @@ class HyprWorkspace:
 
     @staticmethod
     def focus_master() -> None:
-        return talk.HyprTalk("layoutmsg focusmaster master").execute_as_dispatch()
+        return talk.HyprTalk("focusmaster master").execute_as_layoutmsg()
 
     @staticmethod
     def window_master() -> "HyprWindow":
@@ -507,5 +507,5 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         return is_master
 
     def swap_within_workspace(self, positive_dir: bool = True) -> None:
-        cmd = "layoutmsg swapnext" if positive_dir else "layoutmsg swapprev"
-        talk.HyprTalk(cmd).execute_as_dispatch()
+        cmd = "swapnext" if positive_dir else "swapprev"
+        talk.HyprTalk(cmd).execute_as_layoutmsg()
