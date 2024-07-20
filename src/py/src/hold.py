@@ -20,7 +20,7 @@ class Holding:
         self._fzf = fzf.Fzf(fzf_tiebreak="index")
 
     def workspace(self) -> abstraction.HyprWorkspace:
-        return abstraction.HyprWorkspace.from_name_special(self._name)
+        return abstraction.HyprWorkspace.from_name(self._name_workspace)
 
     def push(self, window_curr: typing.Optional[abstraction.HyprWindow] = None) -> None:
         window_curr = window_curr or abstraction.HyprWindow.from_current()
@@ -34,7 +34,7 @@ class Holding:
         self._to_hold(window_curr)
 
         if window_prev:
-            abstraction.HyprWindow.focus(window_prev)  # focus only if non-hold
+            window_prev.focus()  # focus only if non-hold
 
     def _to_hold(
         self, window: abstraction.HyprWindow, unfocus_apres: bool = True
@@ -42,7 +42,7 @@ class Holding:
         is_empty_hold = self._is_empty_hold()
 
         window.fullscreen_off()
-        window.move_window_to_workspace(self._name_workspace)
+        window.move_to_workspace(self._name_workspace)
 
         if is_empty_hold:
             window.group_on_toggle()
@@ -60,7 +60,7 @@ class Holding:
         next(windows)  # pop the first (current) window
 
         for window in windows:
-            if not window.workspace.name == self._name_workspace:
+            if not self._is_on_hold(window):
                 if not workspace:
                     return window
                 if window.is_in_workspace(workspace):
@@ -73,15 +73,15 @@ class Holding:
             window = self.window_previous_non_hold()
         except RuntimeError:
             return
-        abstraction.HyprWindow.focus(window)
+        window.focus()
 
     def move_to_monitor_current(self) -> None:
         try:
-            workspace = abstraction.HyprWorkspace.from_name(self._name_workspace)
+            workspace = self.workspace()
         except ValueError:
             return
 
-        if workspace.monitor.id != abstraction.HyprMonitor.from_current().id:
+        if workspace.monitor != abstraction.HyprMonitor.from_current():
             self.workspace_hold_toggle()
             self.workspace_hold_toggle()
 
@@ -91,6 +91,9 @@ class Holding:
         except ValueError:
             return True
         return False
+
+    def _is_on_hold(self, window: abstraction.HyprWindow) -> bool:
+        return window.is_in_workspace(self._name_workspace)
 
     def workspace_hold_toggle(self) -> None:
         talk.HyprTalk(f"togglespecialworkspace {self._name}").execute_as_dispatch()
@@ -113,7 +116,7 @@ class Holding:
             window_curr = (
                 self.window_previous_non_hold(workspace=workspace)
                 if use_adhoc_terminal
-                else abstraction.HyprWindow.from_current_workspace(workspace)
+                else abstraction.HyprWindow.from_current(workspace=workspace)
             )
         except RuntimeError:
             pass
@@ -143,7 +146,7 @@ class Holding:
             window_curr = (
                 self.window_previous_non_hold(workspace=workspace)
                 if use_adhoc_terminal
-                else abstraction.HyprWindow.from_current_workspace(workspace)
+                else abstraction.HyprWindow.from_current(workspace=workspace)
             )
         except RuntimeError:  # no current window to replace, append instead
             self.pull_append(use_adhoc_terminal=use_adhoc_terminal)
@@ -159,17 +162,17 @@ class Holding:
             if window_curr.is_master(restore_focus=False):
                 is_master = True
             if window_terminal:
-                abstraction.HyprWindow.focus(window_terminal)
+                window_terminal.focus()
 
         window = self.select()
         if not window:
             # restore focus during possible is_master check(s)
-            abstraction.HyprWindow.focus(window_curr)
+            window_curr.focus()
             return
 
         self._to_hold(window_curr)
         window.group_off_move()
-        window.move_window_to_workspace(workspace)
+        window.move_to_workspace(workspace)
         if is_master:
             while not window.is_master():
                 window.swap_within_workspace(positive_dir=False)
