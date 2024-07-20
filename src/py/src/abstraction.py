@@ -198,17 +198,9 @@ class HyprWorkspace:
     def from_name_special(cls, name: str) -> "HyprWorkspace":
         return cls.from_name(cls.name_from_special(name))
 
-    @classmethod
-    def from_hold(cls) -> "HyprWorkspace":
-        return cls.from_name_special("HOLD")
-
     @staticmethod
     def name_from_special(name: str) -> str:
         return f"special:{name}"
-
-    @staticmethod
-    def name_hold() -> str:
-        return HyprWorkspace.name_from_special("HOLD")
 
     @classmethod
     def workspaces(cls) -> cabc.Generator["HyprWorkspace", None, None]:
@@ -218,9 +210,6 @@ class HyprWorkspace:
     @staticmethod
     def workspaces_json() -> cabc.Sequence[dict]:
         return talk.HyprTalk("workspaces").execute_to_json()
-
-    def is_workspace_hold(self) -> bool:
-        return self._name == "special:HOLD"
 
     def is_empty(self) -> bool:
         return HyprWorkspace.from_current().n_windows == 0

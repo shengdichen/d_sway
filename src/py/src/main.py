@@ -24,7 +24,7 @@ class Management:
 
 def main(mode: typing.Optional[str] = None):
     if mode == "focus-previous":
-        hold.Holding.focus_previous()
+        hold.Holding().focus_previous()
     elif mode == "fullscreen":
         Management().fullscreen()
     else:

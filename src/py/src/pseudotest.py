@@ -9,7 +9,7 @@ class TestAbstraction:
 
     def test_workspace(self) -> None:
         abstraction.HyprWorkspace.from_current().print()
-        abstraction.HyprWorkspace.from_hold().print()
+        hold.Holding().workspace().print()
 
         for ws in abstraction.HyprWorkspace.workspaces():
             ws.print()

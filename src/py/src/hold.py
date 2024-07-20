@@ -19,11 +19,14 @@ class Holding:
         self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
         self._fzf = fzf.Fzf(fzf_tiebreak="index")
 
+    def workspace(self) -> abstraction.HyprWorkspace:
+        return abstraction.HyprWorkspace.from_name_special(self._name)
+
     def push(self, window_curr: typing.Optional[abstraction.HyprWindow] = None) -> None:
         window_curr = window_curr or abstraction.HyprWindow.from_current()
 
         try:
-            window_prev = Holding.window_previous_non_hold()
+            window_prev = self.window_previous_non_hold()
         except RuntimeError:
             window_prev = None
 
@@ -49,15 +52,15 @@ class Holding:
         if unfocus_apres:
             self.workspace_hold_toggle()
 
-    @staticmethod
     def window_previous_non_hold(
+        self,
         workspace: typing.Optional[abstraction.HyprWorkspace] = None,
     ) -> abstraction.HyprWindow:
         windows = abstraction.HyprWindow.windows(sort_by_focus=True)
         next(windows)  # pop the first (current) window
 
         for window in windows:
-            if not window.workspace.is_workspace_hold():
+            if not window.workspace.name == self._name_workspace:
                 if not workspace:
                     return window
                 if window.is_in_workspace(workspace):
@@ -65,10 +68,9 @@ class Holding:
 
         raise RuntimeError("hold> no previous non-hold window")
 
-    @staticmethod
-    def focus_previous() -> abstraction.HyprWindow:
+    def focus_previous(self) -> abstraction.HyprWindow:
         try:
-            window = Holding.window_previous_non_hold()
+            window = self.window_previous_non_hold()
         except RuntimeError:
             return
         abstraction.HyprWindow.focus(window)
@@ -85,7 +87,7 @@ class Holding:
 
     def _is_empty_hold(self) -> bool:
         try:
-            abstraction.HyprWorkspace.from_hold()
+            self.workspace()
         except ValueError:
             return True
         return False
@@ -109,7 +111,7 @@ class Holding:
         window_curr = None
         try:
             window_curr = (
-                Holding.window_previous_non_hold(workspace=workspace)
+                self.window_previous_non_hold(workspace=workspace)
                 if use_adhoc_terminal
                 else abstraction.HyprWindow.from_current_workspace(workspace)
             )
@@ -139,7 +141,7 @@ class Holding:
 
         try:
             window_curr = (
-                Holding.window_previous_non_hold(workspace=workspace)
+                self.window_previous_non_hold(workspace=workspace)
                 if use_adhoc_terminal
                 else abstraction.HyprWindow.from_current_workspace(workspace)
             )
