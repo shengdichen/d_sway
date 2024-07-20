@@ -4,6 +4,8 @@ import typing
 
 import abstraction
 import hold
+import launch
+import talk
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +23,26 @@ class Management:
             return
         abstraction.HyprWindow.fullscreen_toggle()
 
+    def to_workspace(self, workspace: str) -> None:
+        try:
+            ws = abstraction.HyprWorkspace.from_name(workspace)
+        except ValueError:
+            talk.HyprTalk(f"workspace {workspace}").execute_as_dispatch()
+            launch.Launch.launch_foot(use_footclient=True, as_float=False)
+            return
 
-def main(mode: typing.Optional[str] = None):
+        talk.HyprTalk(f"workspace {workspace}").execute_as_dispatch()
+        if ws.n_windows == 0:
+            launch.Launch.launch_foot(use_footclient=True, as_float=False)
+
+
+def main(mode: typing.Optional[str], *args: str):
     if mode == "focus-previous":
         hold.Holding().focus_previous()
     elif mode == "fullscreen":
         Management().fullscreen()
+    elif mode == "workspace":
+        Management().to_workspace(*args)
     else:
         raise RuntimeError("what mode?")
 
@@ -39,4 +55,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         raise RuntimeError("hypr/main> say what?")
 
-    main(sys.argv[1])
+    main(*sys.argv[1:])
