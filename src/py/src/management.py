@@ -56,7 +56,7 @@ class Management:
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
 
 
-def main(mode: typing.Optional[str], *args: str):
+def main(mode: typing.Optional[str], *args: str) -> None:
     if mode == "focus-previous":
         Management().focus_previous()
     elif mode == "fullscreen":
