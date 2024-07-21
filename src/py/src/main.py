@@ -23,6 +23,22 @@ class Management:
             return
         abstraction.HyprWindow.fullscreen_toggle()
 
+    def quit(self, stay_in_workspace: bool = False) -> None:
+        try:
+            if stay_in_workspace:
+                window_prev = hold.Holding().window_previous_non_hold(
+                    workspace=abstraction.HyprWorkspace.from_current()
+                )
+            else:
+                window_prev = hold.Holding().window_previous_non_hold()
+        except RuntimeError:
+            window_prev = None
+
+        talk.HyprTalk("killactive").execute_as_dispatch()
+
+        if window_prev:
+            window_prev.focus()  # focus only if non-hold
+
     def to_workspace(self, workspace: str) -> None:
         try:
             ws = abstraction.HyprWorkspace.from_name(workspace)
@@ -41,6 +57,8 @@ def main(mode: typing.Optional[str], *args: str):
         hold.Holding().focus_previous()
     elif mode == "fullscreen":
         Management().fullscreen()
+    elif mode == "quit":
+        Management().quit()
     elif mode == "workspace":
         Management().to_workspace(*args)
     else:
