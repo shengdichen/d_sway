@@ -287,9 +287,11 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self._pid = pid
         self._xwayland = xwayland
         self._pinned = pinned
+
         self._is_fullscreen = is_fullscreen
         self._fullscreen_mode = fullscreen_mode
         self._fake_fullscreen = fake_fullscreen
+
         self._grouped = grouped
         self._swallowing = swallowing
         self._idx_focus = idx_focus
@@ -482,6 +484,19 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def fullscreen_off(self) -> None:
         if self._is_fullscreen:
             HyprWindow.fullscreen_toggle()
+
+    def fullscreen_cycle(self) -> None:
+        if not self._is_fullscreen:
+            HyprWindow.fullscreen_toggle()
+            return
+
+        if self._fullscreen_mode == 1:  # fullscreen, with decoration
+            # make fullscreen, now withOUT decoration
+            for __ in range(2):
+                HyprWindow.fullscreen_toggle(keep_decoration=False)
+            return
+
+        HyprWindow.fullscreen_toggle()  # unfullscreen
 
     @staticmethod
     def fullscreen_toggle(keep_decoration: bool = True) -> None:

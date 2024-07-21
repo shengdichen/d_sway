@@ -25,7 +25,7 @@ class Management:
         if n_windows == 1:
             abstraction.HyprWindow.fullscreen_toggle(keep_decoration=False)
             return
-        abstraction.HyprWindow.fullscreen_toggle()
+        abstraction.HyprWindow.from_current().fullscreen_cycle()
 
     def quit(self, stay_in_workspace: bool = False) -> None:
         try:
