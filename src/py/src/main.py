@@ -12,10 +12,14 @@ logger = logging.getLogger(__name__)
 
 class Management:
     def __init__(self):
-        pass
+        self._workspace = abstraction.HyprWorkspace.from_current()
+        self._holding = hold.Holding()
+
+    def focus_previous(self) -> None:
+        self._holding.focus_previous()
 
     def fullscreen(self) -> None:
-        n_windows = abstraction.HyprWorkspace.from_current().n_windows
+        n_windows = self._workspace.n_windows
         if n_windows == 0:
             return
         if n_windows == 1:
@@ -26,11 +30,11 @@ class Management:
     def quit(self, stay_in_workspace: bool = False) -> None:
         try:
             if stay_in_workspace:
-                window_prev = hold.Holding().window_previous_non_hold(
-                    workspace=abstraction.HyprWorkspace.from_current()
+                window_prev = self._holding.window_previous_non_hold(
+                    workspace=self._workspace
                 )
             else:
-                window_prev = hold.Holding().window_previous_non_hold()
+                window_prev = self._holding.window_previous_non_hold()
         except RuntimeError:
             window_prev = None
 
@@ -54,7 +58,7 @@ class Management:
 
 def main(mode: typing.Optional[str], *args: str):
     if mode == "focus-previous":
-        hold.Holding().focus_previous()
+        Management().focus_previous()
     elif mode == "fullscreen":
         Management().fullscreen()
     elif mode == "quit":
