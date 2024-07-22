@@ -113,25 +113,6 @@ class Management:
                 break
 
 
-def main(mode: typing.Optional[str], *args: str) -> None:
-    if mode == "focus-previous":
-        Management().focus_previous()
-    elif mode == "fullscreen":
-        Management().fullscreen()
-    elif mode == "only":
-        Management().make_only()
-    elif mode == "quit":
-        Management().quit()
-    elif mode == "focus-to-workspace":
-        Management().focus_to_workspace(*args)
-    elif mode == "window-to-workspace":
-        Management().window_to_workspace(*args)
-    elif mode == "workspace-to-monitor":
-        Management().workspace_to_monitor(*args)
-    else:
-        raise RuntimeError("what mode?")
-
-
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(module)s [%(levelname)s]> %(message)s", level=logging.INFO
@@ -139,5 +120,23 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 1:
         raise RuntimeError("hypr/main> say what?")
+
+    def main(mode: typing.Optional[str], *args: str) -> None:
+        if mode == "focus-previous":
+            Management().focus_previous()
+        elif mode == "fullscreen":
+            Management().fullscreen()
+        elif mode == "only":
+            Management().make_only()
+        elif mode == "quit":
+            Management().quit()
+        elif mode == "focus-to-workspace":
+            Management().focus_to_workspace(*args)
+        elif mode == "window-to-workspace":
+            Management().window_to_workspace(*args)
+        elif mode == "workspace-to-monitor":
+            Management().workspace_to_monitor(*args)
+        else:
+            raise RuntimeError("what mode?")
 
     main(*sys.argv[1:])
