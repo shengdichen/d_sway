@@ -28,6 +28,17 @@ class Management:
             return
         abstraction.HyprWindow.from_current().fullscreen_cycle()
 
+    def make_only(self) -> None:
+        n_windows = self._workspace.n_windows
+        if n_windows in (0, 1):
+            return
+
+        window = abstraction.HyprWindow.from_current()
+        for w in self._holding.windows_non_hold():
+            if w != window and w.is_in_workspace(self._workspace):
+                self._holding.to_hold(w)
+        window.focus()
+
     def quit(self, stay_in_workspace: bool = False) -> None:
         try:
             if stay_in_workspace:
@@ -107,6 +118,8 @@ def main(mode: typing.Optional[str], *args: str) -> None:
         Management().focus_previous()
     elif mode == "fullscreen":
         Management().fullscreen()
+    elif mode == "only":
+        Management().make_only()
     elif mode == "quit":
         Management().quit()
     elif mode == "focus-to-workspace":

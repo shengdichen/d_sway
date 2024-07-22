@@ -31,12 +31,12 @@ class Holding:
             window_prev = None
 
         window_curr.float_off()
-        self._to_hold(window_curr)
+        self.to_hold(window_curr)
 
         if window_prev:
             window_prev.focus()  # focus only if non-hold
 
-    def _to_hold(
+    def to_hold(
         self, window: abstraction.HyprWindow, unfocus_apres: bool = True
     ) -> None:
         is_empty_hold = self._is_empty_hold()
@@ -175,7 +175,7 @@ class Holding:
             window_curr.focus()
             return
 
-        self._to_hold(window_curr)
+        self.to_hold(window_curr)
         window.group_off_move()
         window.move_to_workspace(workspace)
         if is_master:

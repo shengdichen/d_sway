@@ -324,6 +324,13 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def workspace(self) -> HyprWorkspace:
         return self._workspace
 
+    def __eq__(self, that: typing.Any) -> bool:
+        if isinstance(that, int):
+            return self._address == that
+        if isinstance(that, HyprWindow):
+            return self._address == that.address
+        return False
+
     @classmethod
     def from_json(cls, j: dict) -> "HyprWindow":
         return cls(
