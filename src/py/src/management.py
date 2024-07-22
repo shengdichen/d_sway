@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Management:
     def __init__(self):
+        self._monitor = abstraction.HyprMonitor.from_current()
         self._workspace = abstraction.HyprWorkspace.from_current()
         self._holding = hold.Holding()
 
@@ -58,15 +59,8 @@ class Management:
 
         if not need_refocus:
             return
-        for window in abstraction.HyprWindow.windows():
-            if (
-                window.is_on_monitor(self._workspace.monitor)
-                and not window.is_in_workspace_special()
-                and not window.is_in_workspace(self._workspace)
-            ):
-                abstraction.HyprWorkspace.focus(window.workspace)
-                abstraction.HyprWorkspace.focus(workspace)
-                break
+        self._monitor_focus_workspace_previous()
+        abstraction.HyprWorkspace.focus(workspace)
 
     def focus_to_workspace(self, workspace: str) -> None:
         try:
@@ -80,6 +74,33 @@ class Management:
         if ws.n_windows == 0:
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
 
+    def workspace_to_monitor(self, monitor: str) -> None:
+        self._monitor_focus_workspace_previous()
+
+        self._move_workspace_to_monitor(monitor, self._workspace)
+        abstraction.HyprWorkspace.focus(self._workspace)
+
+    def _move_workspace_to_monitor(
+        self,
+        monitor: str,
+        workspace: typing.Optional[abstraction.HyprWorkspace] = None,
+    ) -> None:
+        if workspace:
+            cmd = f"moveworkspacetomonitor {workspace.name} {monitor}"
+        else:
+            cmd = f"movecurrentworkspacetomonitor {monitor}"
+        talk.HyprTalk(cmd).execute_as_dispatch()
+
+    def _monitor_focus_workspace_previous(self) -> None:
+        for window in abstraction.HyprWindow.windows():
+            if (
+                window.is_on_monitor(self._monitor)
+                and not window.is_in_workspace_special()
+                and not window.is_in_workspace(self._workspace)
+            ):
+                abstraction.HyprWorkspace.focus(window.workspace)
+                break
+
 
 def main(mode: typing.Optional[str], *args: str) -> None:
     if mode == "focus-previous":
@@ -92,6 +113,8 @@ def main(mode: typing.Optional[str], *args: str) -> None:
         Management().focus_to_workspace(*args)
     elif mode == "window-to-workspace":
         Management().window_to_workspace(*args)
+    elif mode == "workspace-to-monitor":
+        Management().workspace_to_monitor(*args)
     else:
         raise RuntimeError("what mode?")
 
