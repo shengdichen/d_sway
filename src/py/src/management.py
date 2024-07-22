@@ -43,15 +43,40 @@ class Management:
         if window_prev:
             window_prev.focus()  # focus only if non-hold
 
-    def to_workspace(self, workspace: str) -> None:
+    def window_to_workspace(self, workspace: str) -> None:
+        if self._workspace.n_windows == 0:
+            return
+
+        need_refocus = False
+        if self._workspace.n_windows == 1:
+            need_refocus = True
+
+        window = abstraction.HyprWindow.from_current()
+        if window.is_in_workspace(workspace):
+            return
+        window.move_to_workspace(workspace)
+
+        if not need_refocus:
+            return
+        for window in abstraction.HyprWindow.windows():
+            if (
+                window.is_on_monitor(self._workspace.monitor)
+                and not window.is_in_workspace_special()
+                and not window.is_in_workspace(self._workspace)
+            ):
+                abstraction.HyprWorkspace.focus(window.workspace)
+                abstraction.HyprWorkspace.focus(workspace)
+                break
+
+    def focus_to_workspace(self, workspace: str) -> None:
         try:
             ws = abstraction.HyprWorkspace.from_name(workspace)
         except ValueError:
-            talk.HyprTalk(f"workspace {workspace}").execute_as_dispatch()
+            abstraction.HyprWorkspace.focus(workspace)
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
             return
 
-        talk.HyprTalk(f"workspace {workspace}").execute_as_dispatch()
+        abstraction.HyprWorkspace.focus(workspace)
         if ws.n_windows == 0:
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
 
@@ -63,8 +88,10 @@ def main(mode: typing.Optional[str], *args: str) -> None:
         Management().fullscreen()
     elif mode == "quit":
         Management().quit()
-    elif mode == "workspace":
-        Management().to_workspace(*args)
+    elif mode == "focus-to-workspace":
+        Management().focus_to_workspace(*args)
+    elif mode == "window-to-workspace":
+        Management().window_to_workspace(*args)
     else:
         raise RuntimeError("what mode?")
 

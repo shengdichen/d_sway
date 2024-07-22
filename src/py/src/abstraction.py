@@ -247,6 +247,15 @@ class HyprWorkspace:
         HyprWorkspace.focus_master()
         return HyprWindow.from_current()
 
+    def is_special(self) -> bool:
+        return self._name.startswith("special:")
+
+    @staticmethod
+    def focus(workspace: typing.Union[str, "HyprWorkspace"]) -> None:
+        if isinstance(workspace, HyprWorkspace):
+            workspace = workspace.name
+        talk.HyprTalk(f"workspace {workspace}").execute_as_dispatch()
+
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
     def __init__(
@@ -310,6 +319,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     @property
     def idx_focus(self) -> int:
         return self._idx_focus
+
+    @property
+    def workspace(self) -> HyprWorkspace:
+        return self._workspace
 
     @classmethod
     def from_json(cls, j: dict) -> "HyprWindow":
@@ -421,6 +434,9 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     def is_in_workspace(self, workspace: typing.Any) -> bool:
         return self._workspace == workspace
+
+    def is_in_workspace_special(self) -> bool:
+        return self._workspace.is_special()
 
     def move_to_workspace(
         self,

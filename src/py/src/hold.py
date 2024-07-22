@@ -68,6 +68,11 @@ class Holding:
 
         raise RuntimeError("hold> no previous non-hold window")
 
+    def windows_non_hold(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
+        for window in abstraction.HyprWindow.windows():
+            if not self._is_on_hold(window):
+                yield window
+
     def focus_previous(self) -> abstraction.HyprWindow:
         try:
             window = self.window_previous_non_hold()
