@@ -32,6 +32,12 @@ class HyprTalk:
             raise ValueError(f"talk> invalid dispatch-command [{self._cmd}]")
         return res
 
+    def execute_as_layoutmsg(self) -> None:
+        # NOTE:
+        #   there is NO way to check execution success
+
+        self._execute(f"dispatch layoutmsg {self._cmd}")
+
     def _execute(self, cmd: str) -> str:
         cmd_b = cmd.encode()
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
@@ -43,6 +49,6 @@ class HyprTalk:
                 res_b += r
 
         res = res_b.decode()
-        if res == b"unknown request":
+        if res == "unknown request":
             raise ValueError(f"talk> invalid command [{cmd}]")
         return res

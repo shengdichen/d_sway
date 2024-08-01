@@ -97,6 +97,15 @@ class HyprMonitor:
     def name(self) -> str:
         return self._name
 
+    def __eq__(self, that: typing.Any) -> bool:
+        if isinstance(that, int):
+            return self._id == that
+        if isinstance(that, str):
+            return self._name == that
+        if isinstance(that, HyprMonitor):
+            return self._id == that.id
+        return False
+
     @classmethod
     def monitors(cls) -> cabc.Generator["HyprMonitor", None, None]:
         for js in cls.monitors_json():
@@ -164,6 +173,15 @@ class HyprWorkspace:
     def monitor(self) -> HyprMonitor:
         return self._monitor
 
+    def __eq__(self, that: typing.Any) -> bool:
+        if isinstance(that, int):
+            return self._id == that
+        if isinstance(that, str):
+            return self._name == that
+        if isinstance(that, HyprWorkspace):
+            return self._id == that.id
+        return False
+
     @classmethod
     def from_json(cls, j: dict) -> "HyprWorkspace":
         return cls(
@@ -198,17 +216,9 @@ class HyprWorkspace:
     def from_name_special(cls, name: str) -> "HyprWorkspace":
         return cls.from_name(cls.name_from_special(name))
 
-    @classmethod
-    def from_hold(cls) -> "HyprWorkspace":
-        return cls.from_name_special("HOLD")
-
     @staticmethod
     def name_from_special(name: str) -> str:
         return f"special:{name}"
-
-    @staticmethod
-    def name_hold() -> str:
-        return HyprWorkspace.name_from_special("HOLD")
 
     @classmethod
     def workspaces(cls) -> cabc.Generator["HyprWorkspace", None, None]:
@@ -219,12 +229,6 @@ class HyprWorkspace:
     def workspaces_json() -> cabc.Sequence[dict]:
         return talk.HyprTalk("workspaces").execute_to_json()
 
-    def is_workspace_hold(self) -> bool:
-        return self._name == "special:HOLD"
-
-    def is_empty(self) -> bool:
-        return HyprWorkspace.from_current().n_windows == 0
-
     def print(self) -> None:
         print(
             f'workspace> ({self._id}."{self._name}"): -> '
@@ -233,6 +237,24 @@ class HyprWorkspace:
 
     def windows(self) -> cabc.Generator["HyprWindow", None, None]:
         yield from HyprWindow.windows(workspace=self)
+
+    @staticmethod
+    def focus_master() -> None:
+        return talk.HyprTalk("focusmaster master").execute_as_layoutmsg()
+
+    @staticmethod
+    def window_master() -> "HyprWindow":
+        HyprWorkspace.focus_master()
+        return HyprWindow.from_current()
+
+    def is_special(self) -> bool:
+        return self._name.startswith("special:")
+
+    @staticmethod
+    def focus(workspace: typing.Union[str, "HyprWorkspace"]) -> None:
+        if isinstance(workspace, HyprWorkspace):
+            workspace = workspace.name
+        talk.HyprTalk(f"workspace {workspace}").execute_as_dispatch()
 
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
@@ -274,9 +296,11 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self._pid = pid
         self._xwayland = xwayland
         self._pinned = pinned
+
         self._is_fullscreen = is_fullscreen
         self._fullscreen_mode = fullscreen_mode
         self._fake_fullscreen = fake_fullscreen
+
         self._grouped = grouped
         self._swallowing = swallowing
         self._idx_focus = idx_focus
@@ -289,16 +313,23 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         return self._address
 
     @property
-    def workspace(self) -> HyprWorkspace:
-        return self._workspace
-
-    @property
     def is_fullscreen(self) -> bool:
         return self._is_fullscreen
 
     @property
     def idx_focus(self) -> int:
         return self._idx_focus
+
+    @property
+    def workspace(self) -> HyprWorkspace:
+        return self._workspace
+
+    def __eq__(self, that: typing.Any) -> bool:
+        if isinstance(that, int):
+            return self._address == that
+        if isinstance(that, HyprWindow):
+            return self._address == that.address
+        return False
 
     @classmethod
     def from_json(cls, j: dict) -> "HyprWindow":
@@ -349,8 +380,17 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         return sorted(jsons, key=lambda j: j["focusHistoryID"])
 
     @classmethod
-    def from_current(cls) -> "HyprWindow":
-        return cls.from_json(talk.HyprTalk("activewindow").execute_to_json())
+    def from_current(
+        cls, workspace: typing.Optional[HyprWorkspace] = None
+    ) -> "HyprWindow":
+        if not workspace:
+            return cls.from_json(talk.HyprTalk("activewindow").execute_to_json())
+
+        workspace_id = workspace.id
+        for j in cls.windows_json():
+            if j["workspace"]["id"] == workspace_id:
+                return cls.from_json(j)
+        raise RuntimeError(f"window> window not found [workspace: {workspace.id}]")
 
     @classmethod
     def from_address(cls, address: int) -> "HyprWindow":
@@ -377,9 +417,9 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         if not monitor_current:
             return next(windows)
 
-        mid = HyprMonitor.from_current().id
+        monitor = HyprMonitor.from_current()
         for window in windows:
-            if window.is_on_monitor(mid):
+            if window.is_on_monitor(monitor):
                 return window
 
         raise RuntimeError("window> no previous window")
@@ -396,10 +436,16 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
                 return window
         raise RuntimeError("window> no previous window")
 
-    def is_on_monitor(self, monitor_id: int) -> bool:
-        return self._monitor.id == monitor_id
+    def is_on_monitor(self, monitor: typing.Any) -> bool:
+        return self._monitor == monitor
 
-    def move_window_to_workspace(
+    def is_in_workspace(self, workspace: typing.Any) -> bool:
+        return self._workspace == workspace
+
+    def is_in_workspace_special(self) -> bool:
+        return self._workspace.is_special()
+
+    def move_to_workspace(
         self,
         workspace: HyprWorkspace | str,
         silent: bool = False,
@@ -415,14 +461,14 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         if self.is_grouped():
             return
 
-        HyprWindow.focus(self)  # must focus before grouping
+        self.focus()  # must focus before grouping
         talk.HyprTalk("togglegroup").execute_as_dispatch()
 
     def group_on_move(self) -> None:
         if self.is_grouped():
             return
 
-        HyprWindow.focus(self)  # must focus before grouping
+        self.focus()  # must focus before grouping
         addr = self._address
         for d in "lrud":
             talk.HyprTalk(f"moveintogroup {d}").execute_as_dispatch()
@@ -434,7 +480,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         if not self.is_grouped():
             return
 
-        HyprWindow.focus(self)  # must focus before grouping
+        self.focus()  # must focus before grouping
         talk.HyprTalk("togglegroup").execute_as_dispatch()
 
     def group_off_move(self) -> None:
@@ -448,23 +494,55 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             return False
         return True
 
-    @staticmethod
-    def focus(window: "HyprWindow") -> None:
-        talk.HyprTalk(f"focuswindow address:{window.address}").execute_as_dispatch()
+    def focus(self) -> None:
+        talk.HyprTalk(f"focuswindow address:{self._address}").execute_as_dispatch()
 
-    def move_to_current(self, silent: bool = True) -> None:
-        self.move_window_to_workspace(HyprWorkspace.from_current(), silent=silent)
-        HyprWindow.focus(self)
+    def move_to_current(self) -> None:
+        self.move_to_workspace(HyprWorkspace.from_current())
+
+    def fullscreen_on(self) -> None:
+        if not self._is_fullscreen:
+            HyprWindow.fullscreen_toggle()
+
+    def fullscreen_off(self) -> None:
+        if self._is_fullscreen:
+            HyprWindow.fullscreen_toggle()
+
+    def fullscreen_cycle(self) -> None:
+        if not self._is_fullscreen:
+            HyprWindow.fullscreen_toggle()
+            return
+
+        if self._fullscreen_mode == 1:  # fullscreen, with decoration
+            # make fullscreen, now withOUT decoration
+            for __ in range(2):
+                HyprWindow.fullscreen_toggle(keep_decoration=False)
+            return
+
+        HyprWindow.fullscreen_toggle()  # unfullscreen
 
     @staticmethod
-    def fullscreen_on() -> None:
-        if not HyprWindow.from_current().is_fullscreen:
-            talk.HyprTalk("fullscreen").execute_as_dispatch()
+    def fullscreen_toggle(keep_decoration: bool = True) -> None:
+        mode = 1 if keep_decoration else 0
+        talk.HyprTalk(f"fullscreen {mode}").execute_as_dispatch()
 
-    @staticmethod
-    def fullscreen_off() -> None:
-        if HyprWindow.from_current().is_fullscreen:
-            talk.HyprTalk("fullscreen").execute_as_dispatch()
+    def float_on(self) -> None:
+        if not self._floating:
+            talk.HyprTalk("togglefloating").execute_as_dispatch()
+
+    def float_off(self) -> None:
+        if self._floating:
+            talk.HyprTalk("togglefloating").execute_as_dispatch()
 
     def selection_prompt(self) -> str:
         return f"{self._title} [ADDR: {self._address}]"
+
+    def is_master(self, restore_focus: bool = True) -> bool:
+        is_master = self.address == HyprWorkspace.window_master().address
+        if not is_master and restore_focus:
+            self.focus()
+        return is_master
+
+    def swap_within_workspace(self, positive_dir: bool = True) -> None:
+        cmd = "swapnext" if positive_dir else "swapprev"
+        talk.HyprTalk(cmd).execute_as_layoutmsg()

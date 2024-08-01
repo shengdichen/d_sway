@@ -9,7 +9,7 @@ class TestAbstraction:
 
     def test_workspace(self) -> None:
         abstraction.HyprWorkspace.from_current().print()
-        abstraction.HyprWorkspace.from_hold().print()
+        hold.Holding().workspace().print()
 
         for ws in abstraction.HyprWorkspace.workspaces():
             ws.print()
@@ -18,6 +18,9 @@ class TestAbstraction:
         abstraction.HyprWindow.from_current().print()
         abstraction.HyprWindow.from_previous().print()
         abstraction.HyprWindow.from_previous_relative().print()
+
+    def test_is_master(self) -> None:
+        print(abstraction.HyprWindow.from_current().is_master())
 
 
 class TestHolding:

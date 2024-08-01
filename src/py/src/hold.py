@@ -13,30 +13,36 @@ import talk
 
 class Holding:
     def __init__(self):
-        self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
+        self._name = "HOLD"
+        self._name_workspace = abstraction.HyprWorkspace.name_from_special(self._name)
 
-        self._name_hold = abstraction.HyprWorkspace.name_from_special("HOLD")
+        self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
+        self._fzf = fzf.Fzf(fzf_tiebreak="index")
+
+    def workspace(self) -> abstraction.HyprWorkspace:
+        return abstraction.HyprWorkspace.from_name(self._name_workspace)
 
     def push(self, window_curr: typing.Optional[abstraction.HyprWindow] = None) -> None:
         window_curr = window_curr or abstraction.HyprWindow.from_current()
 
         try:
-            window_prev = Holding.window_previous_non_hold()
+            window_prev = self.window_previous_non_hold()
         except RuntimeError:
             window_prev = None
 
-        self._to_hold(window_curr)
+        window_curr.float_off()
+        self.to_hold(window_curr)
 
         if window_prev:
-            abstraction.HyprWindow.focus(window_prev)  # focus only if non-hold
+            window_prev.focus()  # focus only if non-hold
 
-    def _to_hold(
+    def to_hold(
         self, window: abstraction.HyprWindow, unfocus_apres: bool = True
     ) -> None:
         is_empty_hold = self._is_empty_hold()
 
         window.fullscreen_off()
-        window.move_window_to_workspace(self._name_hold)
+        window.move_to_workspace(self._name_workspace)
 
         if is_empty_hold:
             window.group_on_toggle()
@@ -44,77 +50,143 @@ class Holding:
             window.group_on_move()
 
         if unfocus_apres:
-            Holding.workspace_hold_toggle()
+            self.workspace_hold_toggle()
 
-    @staticmethod
-    def window_previous_non_hold() -> abstraction.HyprWindow:
+    def window_previous_non_hold(
+        self,
+        workspace: typing.Optional[abstraction.HyprWorkspace] = None,
+    ) -> abstraction.HyprWindow:
         windows = abstraction.HyprWindow.windows(sort_by_focus=True)
         next(windows)  # pop the first (current) window
 
         for window in windows:
-            if not window.workspace.is_workspace_hold():
-                return window
+            if not self._is_on_hold(window):
+                if not workspace:
+                    return window
+                if window.is_in_workspace(workspace):
+                    return window
 
         raise RuntimeError("hold> no previous non-hold window")
 
+    def windows_non_hold(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
+        for window in abstraction.HyprWindow.windows():
+            if not self._is_on_hold(window):
+                yield window
+
+    def focus_previous(self) -> abstraction.HyprWindow:
+        try:
+            window = self.window_previous_non_hold()
+        except RuntimeError:
+            return
+        window.focus()
+
+    def move_to_monitor_current(self) -> None:
+        try:
+            workspace = self.workspace()
+        except ValueError:
+            return
+
+        if workspace.monitor != abstraction.HyprMonitor.from_current():
+            self.workspace_hold_toggle()
+            self.workspace_hold_toggle()
+
     def _is_empty_hold(self) -> bool:
         try:
-            abstraction.HyprWorkspace.from_hold()
+            self.workspace()
         except ValueError:
             return True
         return False
 
-    @staticmethod
-    def workspace_hold_toggle() -> None:
-        talk.HyprTalk("togglespecialworkspace HOLD").execute_as_dispatch()
+    def _is_on_hold(self, window: abstraction.HyprWindow) -> bool:
+        return window.is_in_workspace(self._name_workspace)
 
-    def pull(self, terminal_current: bool = False) -> None:
+    def workspace_hold_toggle(self) -> None:
+        talk.HyprTalk(f"togglespecialworkspace {self._name}").execute_as_dispatch()
+
+    def pull(self, use_adhoc_terminal: bool = True) -> None:
         while True:
             mode = input("hypr> mode? [a]ppend (default); [r]eplace ")
             if not mode or mode == "a":
-                self.pull_append()
+                self.pull_append(use_adhoc_terminal=use_adhoc_terminal)
                 break
             if mode == "r":
-                self.pull_replace(terminal_current=terminal_current)
+                self.pull_replace(use_adhoc_terminal=use_adhoc_terminal)
                 break
             print(f"hypr> huh? what is [{mode}]?\n")
 
-    def pull_append(self) -> None:
+    def pull_append(self, use_adhoc_terminal: bool = True) -> None:
+        workspace = abstraction.HyprWorkspace.from_current()
+        window_curr = None
+        try:
+            window_curr = (
+                self.window_previous_non_hold(workspace=workspace)
+                if use_adhoc_terminal
+                else abstraction.HyprWindow.from_current(workspace=workspace)
+            )
+        except RuntimeError:
+            pass
+        is_fullscreen_avant = False
+        if window_curr:
+            is_fullscreen_avant = window_curr.is_fullscreen
+
         for window in self.select_multi():
             window.group_off_move()
             window.move_to_current()
 
+        if is_fullscreen_avant:
+            abstraction.HyprWindow.fullscreen_toggle()
+
     def select_multi(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
-        for choice in fzf.Fzf(fzf_height_perc=100).choose_multi(self._choices()):
+        for choice in self._fzf.choose_multi(self._choices()):
             yield abstraction.HyprWindow.from_address(
                 self._pattern.match(choice).group(1)
             )
 
-    def pull_replace(self, terminal_current: bool = False) -> None:
+    def pull_replace(self, use_adhoc_terminal: bool = True) -> None:
         workspace = (
             abstraction.HyprWorkspace.from_current()
         )  # must get current workspace a priori
 
-        if terminal_current:
-            window_curr = abstraction.HyprWindow.from_current()
-        else:
-            try:
-                window_curr = Holding.window_previous_non_hold()
-            except RuntimeError:
-                window_curr = None
+        try:
+            window_curr = (
+                self.window_previous_non_hold(workspace=workspace)
+                if use_adhoc_terminal
+                else abstraction.HyprWindow.from_current(workspace=workspace)
+            )
+        except RuntimeError:  # no current window to replace, append instead
+            self.pull_append(use_adhoc_terminal=use_adhoc_terminal)
+            return
+        is_fullscreen_avant = window_curr.is_fullscreen
+
+        window_terminal = (
+            abstraction.HyprWindow.from_current() if use_adhoc_terminal else None
+        )
+
+        is_master = False
+        if workspace.n_windows > 1:
+            if window_curr.is_master(restore_focus=False):
+                is_master = True
+            if window_terminal:
+                window_terminal.focus()
 
         window = self.select()
         if not window:
+            # restore focus during possible is_master check(s)
+            window_curr.focus()
             return
 
-        if window_curr:
-            self._to_hold(window_curr)
+        self.to_hold(window_curr)
         window.group_off_move()
-        window.move_window_to_workspace(workspace)
+        window.move_to_workspace(workspace)
+        if is_master:
+            while not window.is_master():
+                window.swap_within_workspace(positive_dir=False)
+        if is_fullscreen_avant:
+            abstraction.HyprWindow.fullscreen_toggle()
 
     def select(self) -> abstraction.HyprWindow | None:
         try:
-            choice = fzf.Fzf(fzf_height_perc=100).choose_one(self._choices())
+            choice = self._fzf.choose_one(self._choices())
         except RuntimeError:
             return None
         return abstraction.HyprWindow.from_address(self._pattern.match(choice).group(1))
@@ -124,7 +196,7 @@ class Holding:
 
     def _windows(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
         for j in abstraction.HyprWindow.windows_json(sort_by_focus=True):
-            if j["workspace"]["name"] == self._name_hold:
+            if j["workspace"]["name"] == self._name_workspace:
                 yield abstraction.HyprWindow.from_json(j)
 
 
@@ -134,18 +206,33 @@ if __name__ == "__main__":
     )
 
     if len(sys.argv) == 1:
-        raise FloatingPointError("what mode? [push or pull?]")
+        raise RuntimeError("hypr/hold> say what?")
 
     def main(mode: typing.Optional[str] = None) -> None:
         if mode == "push":
             Holding().push()
-        elif mode == "pull-terminal-curr":
-            Holding().pull(terminal_current=True)
-        elif mode == "pull-terminal-new":
-            Holding().pull(terminal_current=False)
-        elif mode == "pull":
-            cmd = f"python {pathlib.Path(__file__).resolve()} pull-terminal-new"
+
+        elif mode == "pull-append-cmd":
+            Holding().pull_append()
+        elif mode == "pull-append":
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+
+        elif mode == "pull-replace-cmd":
+            Holding().pull_replace()
+        elif mode == "pull-replace":
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
+            launch.Launch.launch_foot(cmd)
+
+        elif mode == "pull-cmd":
+            Holding().pull()
+        elif mode == "pull":
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
+            launch.Launch.launch_foot(cmd)
+
+        elif mode == "pull-inplace":
+            Holding().pull(use_adhoc_terminal=True)
+
         else:
             raise RuntimeError("what mode?")
 

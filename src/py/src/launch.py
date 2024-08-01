@@ -16,8 +16,10 @@ class Launch:
         talk.HyprTalk(cmd).execute_as_dispatch()
 
     @staticmethod
-    def launch_foot(cmd_extra: str = "", as_float: bool = True) -> None:
-        cmd = "foot"
+    def launch_foot(
+        cmd_extra: str = "", use_footclient: bool = False, as_float: bool = True
+    ) -> None:
+        cmd = "footclient" if use_footclient else "foot"
         if cmd_extra:
             cmd = f"{cmd} {cmd_extra}"
 
