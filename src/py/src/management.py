@@ -56,7 +56,7 @@ class Management:
             window_prev.focus()  # focus only if non-hold
 
     def window_to_workspace(self, workspace: str) -> None:
-        if self._workspace.n_windows == 0:
+        if self._workspace.is_empty():
             return
 
         need_refocus = False
@@ -74,16 +74,26 @@ class Management:
         abstraction.HyprWorkspace.focus(workspace)
 
     def focus_to_workspace(self, workspace: str) -> None:
+        if self._workspace == workspace:
+            return
+
         try:
             ws = abstraction.HyprWorkspace.from_name(workspace)
-        except ValueError:
+        except ValueError:  # workspace does not exist
             abstraction.HyprWorkspace.focus(workspace)
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
             return
 
-        abstraction.HyprWorkspace.focus(workspace)
-        if ws.n_windows == 0:
+        if ws.is_empty():  # workspace exists, but has no windows
+            abstraction.HyprWorkspace.focus(ws)
+            # force the focus-border to new workspace
+            # (will otherwise remain in previous workspace, causing visual confusion)
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
+            return
+
+        # sometimes hyprland's workspace-focus call (mysteriously) does not move
+        # the focus-border to the new workspace; use the window-focus call instead
+        abstraction.HyprWindow.from_previous_in_workspace(ws).focus()
 
     def workspace_to_monitor(self, monitor: str) -> None:
         self._monitor_focus_workspace_previous()

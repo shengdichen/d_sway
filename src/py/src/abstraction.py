@@ -250,6 +250,9 @@ class HyprWorkspace:
     def is_special(self) -> bool:
         return self._name.startswith("special:")
 
+    def is_empty(self) -> bool:
+        return self._n_windows == 0
+
     @staticmethod
     def focus(workspace: typing.Union[str, "HyprWorkspace"]) -> None:
         if isinstance(workspace, HyprWorkspace):
@@ -423,6 +426,15 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
                 return window
 
         raise RuntimeError("window> no previous window")
+
+    @classmethod
+    def from_previous_in_workspace(cls, workspace: HyprWorkspace) -> "HyprWindow":
+        try:
+            return next(cls.windows(workspace=workspace, sort_by_focus=True))
+        except StopIteration as e:
+            raise RuntimeError(
+                f"window> no previous window [workspace: {workspace.name}]"
+            ) from e
 
     @classmethod
     def from_previous_relative(
