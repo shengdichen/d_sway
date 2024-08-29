@@ -379,6 +379,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             return jsons
         return sorted(jsons, key=lambda j: j["focusHistoryID"])
 
+    def opacity_toggle(self) -> None:
+        cmd = f"address:{self._address} opaque toggle"
+        talk.HyprTalk(cmd).execute_as_setprop()
+
     @classmethod
     def from_current(
         cls, workspace: typing.Optional[HyprWorkspace] = None

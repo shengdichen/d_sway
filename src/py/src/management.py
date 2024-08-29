@@ -122,6 +122,9 @@ class Management:
                 abstraction.HyprWorkspace.focus(window.workspace)
                 break
 
+    def opacity(self) -> None:
+        abstraction.HyprWindow.from_current().opacity_toggle()
+
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -146,6 +149,8 @@ if __name__ == "__main__":
             Management().window_to_workspace(*args)
         elif mode == "workspace-to-monitor":
             Management().workspace_to_monitor(*args)
+        elif mode == "opacity":
+            Management().opacity()
         else:
             raise RuntimeError("what mode?")
 
