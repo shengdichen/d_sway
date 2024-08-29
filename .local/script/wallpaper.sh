@@ -8,6 +8,7 @@ cd "${SCRIPT_PATH}" || exit 3
 __make() {
     local _default="${HOME}/xyz/MDA/Pic/wallpapers/Leopard_Server.jpg" _link="wallpaper"
 
+    local _wm
     for _wm in "hypr" "niri" "river"; do
         (
             cd "${HOME}/.config/${_wm}/" || exit 3
@@ -19,19 +20,27 @@ __make() {
 }
 
 __wallpaper() {
-    local _choice
-    _choice="$(
-        for _wm in "hypr" "niri" "river"; do
-            printf "%s\n" "${_wm}"
-        done | __fzf
-    )"
+    local _wm
+    while [ "${#}" -gt 0 ]; do
+        case "${1}" in
+        "--wm")
+            _wm="${2}"
+            shift 2
+            ;;
+        "--")
+            shift && break
+            ;;
+        esac
+    done
 
-    if [ "${_choice}" ]; then
-        local _path="${HOME}/.config/${_choice}/wallpaper"
-        __pkill "swaybg -m fill -i ${_path}"
-        __nohup swaybg -m fill -i "${_path}"
+    if [ ! "${_wm}" ]; then
+        _wm="$(__fzf_opts "hypr" "niri" "river")"
     fi
+
+    local _path="${HOME}/.config/${_wm}/wallpaper"
+    __pkill "swaybg -m fill -i ${_path}"
+    __nohup swaybg -m fill -i "${_path}"
 }
 
 __make
-__wallpaper
+__wallpaper "${@}"
