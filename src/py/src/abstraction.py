@@ -276,9 +276,8 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         pid: int,
         xwayland: bool,
         pinned: bool,
-        is_fullscreen: bool,
-        fullscreen_mode: int,
-        fake_fullscreen: bool,
+        fullscreen_mode_internal: bool,
+        fullscreen_mode_client: int,
         grouped: list,
         swallowing: str,
         idx_focus: int,
@@ -300,9 +299,8 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self._xwayland = xwayland
         self._pinned = pinned
 
-        self._is_fullscreen = is_fullscreen
-        self._fullscreen_mode = fullscreen_mode
-        self._fake_fullscreen = fake_fullscreen
+        self._fullscreen_mode_internal = fullscreen_mode_internal
+        self._fullscreen_mode_client = fullscreen_mode_client
 
         self._grouped = grouped
         self._swallowing = swallowing
@@ -317,7 +315,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @property
     def is_fullscreen(self) -> bool:
-        return self._is_fullscreen
+        return self._fullscreen_mode_internal
 
     @property
     def idx_focus(self) -> int:
@@ -350,9 +348,8 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             pid=j["pid"],
             xwayland=j["xwayland"],
             pinned=j["pinned"],
-            is_fullscreen=j["fullscreen"],
-            fullscreen_mode=j["fullscreenMode"],
-            fake_fullscreen=j["fakeFullscreen"],
+            fullscreen_mode_internal=j["fullscreen"],
+            fullscreen_mode_client=j["fullscreenClient"],
             grouped=j["grouped"],
             swallowing=j["swallowing"],
             idx_focus=j["focusHistoryID"],
@@ -512,26 +509,33 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def move_to_current(self) -> None:
         self.move_to_workspace(HyprWorkspace.from_current())
 
-    def fullscreen_on(self) -> None:
-        if not self._is_fullscreen:
-            HyprWindow.fullscreen_toggle()
+    def fullscreen_on(self, keep_decoration: bool = True) -> None:
+        if self._fullscreen_mode_internal != 0:
+            return
+        HyprWindow.fullscreen_toggle(keep_decoration=keep_decoration)
 
     def fullscreen_off(self) -> None:
-        if self._is_fullscreen:
-            HyprWindow.fullscreen_toggle()
+        if self._fullscreen_mode_internal == 0:
+            return
+
+        if self._fullscreen_mode_internal == 1:
+            HyprWindow.fullscreen_toggle(keep_decoration=True)
+            return
+
+        if self._fullscreen_mode_internal == 2:
+            HyprWindow.fullscreen_toggle(keep_decoration=False)
 
     def fullscreen_cycle(self) -> None:
-        if not self._is_fullscreen:
-            HyprWindow.fullscreen_toggle()
+        if self._fullscreen_mode_internal == 0:
+            HyprWindow.fullscreen_toggle(keep_decoration=True)
             return
 
-        if self._fullscreen_mode == 1:  # fullscreen, with decoration
+        if self._fullscreen_mode_internal == 1:  # fullscreen, with decoration
             # make fullscreen, now withOUT decoration
-            for __ in range(2):
-                HyprWindow.fullscreen_toggle(keep_decoration=False)
+            HyprWindow.fullscreen_toggle(keep_decoration=False)
             return
 
-        HyprWindow.fullscreen_toggle()  # unfullscreen
+        self.fullscreen_off()
 
     @staticmethod
     def fullscreen_toggle(keep_decoration: bool = True) -> None:
