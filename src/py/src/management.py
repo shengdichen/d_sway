@@ -21,12 +21,15 @@ class Management:
 
     def fullscreen(self) -> None:
         n_windows = self._workspace.n_windows
+        if n_windows <= 1:
+            return
+        abstraction.HyprWindow.from_current().fullscreen()
+
+    def fullscreen_mode(self) -> None:
+        n_windows = self._workspace.n_windows
         if n_windows == 0:
             return
-        if n_windows == 1:
-            abstraction.HyprWindow.fullscreen_toggle(keep_decoration=False)
-            return
-        abstraction.HyprWindow.from_current().fullscreen_cycle()
+        abstraction.HyprWindow.from_current().fullscreen_mode_switch()
 
     def make_only(self) -> None:
         n_windows = self._workspace.n_windows
@@ -139,6 +142,8 @@ if __name__ == "__main__":
             Management().focus_previous()
         elif mode == "fullscreen":
             Management().fullscreen()
+        elif mode == "fullscreen-mode":
+            Management().fullscreen_mode()
         elif mode == "only":
             Management().make_only()
         elif mode == "quit":

@@ -315,7 +315,15 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @property
     def is_fullscreen(self) -> bool:
-        return self._fullscreen_mode_internal
+        return self._fullscreen_mode_internal != 0
+
+    @property
+    def is_fullscreen_with_decoration(self) -> bool:
+        return self._fullscreen_mode_internal == 1
+
+    @property
+    def is_fullscreen_without_decoration(self) -> bool:
+        return self._fullscreen_mode_internal == 2
 
     @property
     def idx_focus(self) -> int:
@@ -514,36 +522,55 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self.move_to_workspace(HyprWorkspace.from_current())
 
     def fullscreen_on(self, keep_decoration: bool = True) -> None:
-        if self._fullscreen_mode_internal != 0:
+        if self.is_fullscreen:
             return
-        HyprWindow.fullscreen_toggle(keep_decoration=keep_decoration)
+        HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=keep_decoration)
 
     def fullscreen_off(self) -> None:
-        if self._fullscreen_mode_internal == 0:
+        if not self.is_fullscreen:
             return
 
-        if self._fullscreen_mode_internal == 1:
-            HyprWindow.fullscreen_toggle(keep_decoration=True)
+        if self.is_fullscreen_with_decoration:
+            HyprWindow.fullscreen_toggle()
             return
 
-        if self._fullscreen_mode_internal == 2:
-            HyprWindow.fullscreen_toggle(keep_decoration=False)
+        # fullscreen without decoration
+        HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=False)
+
+    def fullscreen(self) -> None:
+        if self.is_fullscreen:
+            self.fullscreen_off()
+            return
+        self.fullscreen_on()
+
+    def fullscreen_mode_switch(self, guarantee_fullscreen: bool = True) -> None:
+        # not fullscreen -> fullscreen no-deco
+        if not self.is_fullscreen and guarantee_fullscreen:
+            self.fullscreen_on(keep_decoration=False)
+            return
+
+        # fullscreen with deco -> fullscreen no-deco
+        if self.is_fullscreen_with_decoration:
+            HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=False)
+            return
+
+        # fullscreen no-deco -> fullscreen with deco
+        HyprWindow.fullscreen_toggle()
 
     def fullscreen_cycle(self) -> None:
-        if self._fullscreen_mode_internal == 0:
-            HyprWindow.fullscreen_toggle(keep_decoration=True)
+        if not self.is_fullscreen:
+            HyprWindow.fullscreen_toggle()
             return
 
-        if self._fullscreen_mode_internal == 1:  # fullscreen, with decoration
-            # make fullscreen, now withOUT decoration
-            HyprWindow.fullscreen_toggle(keep_decoration=False)
+        if self.is_fullscreen_without_decoration:
+            HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=False)
             return
 
         self.fullscreen_off()
 
     @staticmethod
-    def fullscreen_toggle(keep_decoration: bool = True) -> None:
-        mode = 1 if keep_decoration else 0
+    def fullscreen_toggle(keep_decoration_when_fullscreen: bool = True) -> None:
+        mode = 1 if keep_decoration_when_fullscreen else 0
         talk.HyprTalk(f"fullscreen {mode}").execute_as_dispatch()
 
     def float_on(self) -> None:
