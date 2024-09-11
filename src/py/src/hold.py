@@ -1,7 +1,6 @@
 import collections.abc as cabc
 import logging
 import pathlib
-import re
 import sys
 import typing
 
@@ -16,7 +15,6 @@ class Holding:
         self._name = "HOLD"
         self._name_workspace = abstraction.HyprWorkspace.name_from_special(self._name)
 
-        self._pattern = re.compile(r"^.* \[ADDR: (.*)\].*$")
         self._fzf = fzf.Fzf(fzf_tiebreak="index")
 
     def workspace(self) -> abstraction.HyprWorkspace:
@@ -30,11 +28,12 @@ class Holding:
         except RuntimeError:
             window_prev = None
 
-        window_curr.float_off()
-        self.to_hold(window_curr)
+        if not self._is_on_hold(window_curr):
+            window_curr.float_off()
+            self.to_hold(window_curr)
 
         if window_prev:
-            window_prev.focus()  # focus only if non-hold
+            window_prev.focus()
 
     def to_hold(
         self, window: abstraction.HyprWindow, unfocus_apres: bool = True
@@ -100,8 +99,23 @@ class Holding:
     def _is_on_hold(self, window: abstraction.HyprWindow) -> bool:
         return window.is_in_workspace(self._name_workspace)
 
+    def is_on_hold_now(self) -> bool:
+        return self._is_on_hold(abstraction.HyprWindow.from_current())
+
     def workspace_hold_toggle(self) -> None:
         talk.HyprTalk(f"togglespecialworkspace {self._name}").execute_as_dispatch()
+
+    def peak(self, use_adhoc_terminal: bool = True) -> None:
+        windows = self._windows()
+        if use_adhoc_terminal:
+            next(windows)  # pop the terminal-window
+        next(windows)  # pop the current window
+
+        try:
+            choice = self._fzf.choose_one([w.selection_prompt() for w in windows])
+        except RuntimeError:
+            return
+        abstraction.HyprWindow.from_selection_prompt(choice).focus()
 
     def pull(self, use_adhoc_terminal: bool = True) -> None:
         while True:
@@ -138,9 +152,7 @@ class Holding:
 
     def select_multi(self) -> cabc.Generator[abstraction.HyprWindow, None, None]:
         for choice in self._fzf.choose_multi(self._choices()):
-            yield abstraction.HyprWindow.from_address(
-                self._pattern.match(choice).group(1)
-            )
+            yield abstraction.HyprWindow.from_selection_prompt(choice)
 
     def pull_replace(self, use_adhoc_terminal: bool = True) -> None:
         workspace = (
@@ -189,7 +201,7 @@ class Holding:
             choice = self._fzf.choose_one(self._choices())
         except RuntimeError:
             return None
-        return abstraction.HyprWindow.from_address(self._pattern.match(choice).group(1))
+        return abstraction.HyprWindow.from_selection_prompt(choice)
 
     def _choices(self) -> cabc.Sequence[str]:
         return [w.selection_prompt() for w in self._windows()]
@@ -198,6 +210,21 @@ class Holding:
         for j in abstraction.HyprWindow.windows_json(sort_by_focus=True):
             if j["workspace"]["name"] == self._name_workspace:
                 yield abstraction.HyprWindow.from_json(j)
+
+    def unhold(self) -> None:
+        workspace = next(self.workspaces_non_hold())
+        window = abstraction.HyprWindow.from_current()
+
+        window.group_off_move()
+        window.move_to_workspace(workspace)
+
+    def workspaces_non_hold(
+        self,
+    ) -> cabc.Generator[abstraction.HyprWorkspace, None, None]:
+        for workspace in abstraction.HyprWorkspace.workspaces():
+            if workspace == self._name_workspace:
+                continue
+            yield workspace
 
 
 if __name__ == "__main__":
@@ -212,9 +239,24 @@ if __name__ == "__main__":
         if mode == "push":
             Holding().push()
 
+        elif mode == "peak-cmd":
+            Holding().peak()
+        elif mode == "peak":
+            h = Holding()
+            if not h.is_on_hold_now():
+                h.workspace_hold_toggle()
+                return
+            cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
+            launch.Launch.launch_foot(cmd)
+
         elif mode == "pull-append-cmd":
             Holding().pull_append()
         elif mode == "pull-append":
+            h = Holding()
+            if h.is_on_hold_now():
+                h.unhold()
+                return
+
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
 

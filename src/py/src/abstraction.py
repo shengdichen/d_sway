@@ -1,4 +1,5 @@
 import collections.abc as cabc
+import re
 import typing
 
 import talk
@@ -261,6 +262,8 @@ class HyprWorkspace:
 
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
+    PATTERN_SELECTION_PROMPT = re.compile(r"^.* \[ADDR: (.*)\].*$")
+
     def __init__(
         self,
         address: int,
@@ -456,6 +459,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             if window.idx_focus == idx_focus:
                 return window
         raise RuntimeError("window> no previous window")
+
+    @classmethod
+    def from_selection_prompt(cls, choice: str) -> "HyprWindow":
+        return cls.from_address(cls.PATTERN_SELECTION_PROMPT.match(choice).group(1))
 
     def is_on_monitor(self, monitor: typing.Any) -> bool:
         return self._monitor == monitor
