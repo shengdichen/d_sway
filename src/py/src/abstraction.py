@@ -591,6 +591,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def selection_prompt(self) -> str:
         return f"{self._title} [ADDR: {self._address}]"
 
+    def make_master(self) -> None:
+        while not self.is_master():
+            self.swap_within_workspace(positive_dir=False)
+
     def is_master(self, restore_focus: bool = True) -> bool:
         is_master = self.address == HyprWorkspace.window_master().address
         if not is_master and restore_focus:

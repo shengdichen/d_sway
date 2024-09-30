@@ -175,8 +175,7 @@ class Holding:
         window.group_off_move()
         window.move_to_workspace(workspace)
         if is_master:
-            while not window.is_master():
-                window.swap_within_workspace(positive_dir=False)
+            window.make_master()
 
     def select(self) -> abstraction.HyprWindow | None:
         try:
@@ -220,20 +219,24 @@ if __name__ == "__main__":
     def main(mode: typing.Optional[str] = None) -> None:
         if mode == "push":
             Holding().push()
+            return
 
-        elif mode == "peak-cmd":
+        if mode == "peak-cmd":
             Holding().peak()
-        elif mode == "peak":
+            return
+        if mode == "peak":
             h = Holding()
             if not h.is_on_hold_now():
                 h.workspace_hold_toggle()
                 return
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+            return
 
-        elif mode == "pull-append-cmd":
+        if mode == "pull-append-cmd":
             Holding().pull_append()
-        elif mode == "pull-append":
+            return
+        if mode == "pull-append":
             h = Holding()
             if h.is_on_hold_now():
                 h.unhold()
@@ -242,24 +245,29 @@ if __name__ == "__main__":
             abstraction.HyprWindow.from_current().fullscreen_off()
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+            return
 
-        elif mode == "pull-replace-cmd":
+        if mode == "pull-replace-cmd":
             Holding().pull_replace()
-        elif mode == "pull-replace":
+            return
+        if mode == "pull-replace":
             abstraction.HyprWindow.from_current().fullscreen_off()
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+            return
 
-        elif mode == "pull-cmd":
+        if mode == "pull-cmd":
             Holding().pull()
-        elif mode == "pull":
+            return
+        if mode == "pull":
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+            return
 
-        elif mode == "pull-inplace":
+        if mode == "pull-inplace":
             Holding().pull(use_adhoc_terminal=True)
+            return
 
-        else:
-            raise RuntimeError("what mode?")
+        raise RuntimeError("what mode?")
 
     main(sys.argv[1])
