@@ -3,66 +3,42 @@
 SCRIPT_PATH="$(realpath "$(dirname "${0}")")"
 cd "${SCRIPT_PATH}" || exit 3
 
-WALLPAPER_PATH="${HOME}/xyz/MDA/Pic/wallpapers"
-ADHOC_PATH="${SCRIPT_PATH}/.config/sway/conf/components/adhoc"
+DIR_HYPR="${HOME}/.config/hypr"
+CURRENT_CONF="current.conf"
+
+__mkdir() {
+    mkdir -p "${DIR_HYPR}"
+    mkdir -p "${HOME}/.config/river"
+    mkdir -p "${HOME}/.config/niri"
+}
+
+__adhoc() {
+    local _d _conf
+    for _d in "${DIR_HYPR}" "${HOME}/.config/sway/conf/components"; do
+        _d="${_d}/adhoc"
+        mkdir -p "${_d}"
+        _conf="${_d}/${CURRENT_CONF}"
+        [ ! -h "${_conf}" ] && [ ! -e "${_conf}" ] && touch "${_conf}"
+    done
+}
 
 __stow() {
-    mkdir -p "${WALLPAPER_PATH}"
-    local _config_hypr="${HOME}/.config/hypr"
-    mkdir -p "${_config_hypr}"
-
     (
         cd .. && stow -R "$(basename "${SCRIPT_PATH}")"
     )
     (
-        cd "${_config_hypr}" && ln -s -f "${SCRIPT_PATH}/src/py/src" .
+        cd "${DIR_HYPR}" && ln -s -f "${SCRIPT_PATH}/src/py/src" .
     )
 }
 
 __wallpaper() {
-    local _choice=""
-    local _need_update=""
-    (
-        cd "${WALLPAPER_PATH}" || exit 3
-        case "${1}" in
-            "select")
-                printf "\n"
-                printf "select wallpaper: "
-                printf "\n"
-                _choice="$(find "." -type f | fzf --reverse --height=37%)"
-                _need_update="yes"
-                ;;
-            *)
-                _choice="Leopard_Server.jpg"
-                ;;
-        esac
-        _choice="$(realpath "${_choice}")"
-
-        cd "${ADHOC_PATH}" || exit 3
-        local _link="wallpaper"
-        if [ "${_need_update}" ] || ! [ -e "${_link}" ]; then
-            ln -s -f "${_choice}" "${_link}"
-        fi
-    )
-}
-
-__adhoc() {
-    local _conf="current.conf"
-    (
-        cd "${ADHOC_PATH}" || exit 3
-        if [ ! -e "${_conf}" ]; then
-            touch "${_conf}"
-        fi
-    )
+    "${SCRIPT_PATH}/.local/script/wallpaper.sh" default
 }
 
 main() {
-    __stow
-    __wallpaper "${@}"
+    __mkdir
     __adhoc
-
-    unset SCRIPT_PATH WALLPAPER_PATH ADHOC_PATH
-    unset -f __stow __wallpaper
+    __stow
+    __wallpaper
 }
 main "${@}"
-unset -f main

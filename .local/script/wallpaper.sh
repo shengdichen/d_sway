@@ -3,7 +3,7 @@
 SCRIPT_PATH="$(realpath "$(dirname "${0}")")"
 cd "${SCRIPT_PATH}" || exit 3
 
-WALLPAPER_DIR="$(xdg-user-dir PICTURES)/wallpapers"
+WALLPAPER_DIR="$(realpath "$(xdg-user-dir PICTURES)/wallpapers")"
 LINK_NAME="wallpaper"
 
 . "${HOME}/.local/lib/util.sh"
@@ -51,7 +51,7 @@ __use_default() {
     local _wp="${WALLPAPER_DIR}/Leopard_Server.jpg"
 
     local _wm
-    for _wm in "hypr" "niri" "river"; do
+    for _wm in "hypr" "sway/conf/components/adhoc" "niri" "river"; do
         __link "${_wm}" "${_wp}"
     done
 }
@@ -101,6 +101,9 @@ case "${1}" in
     "select")
         shift
         __select "${@}"
+        ;;
+    "default")
+        __use_default
         ;;
     *)
         __use_default
