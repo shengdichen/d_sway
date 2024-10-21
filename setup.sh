@@ -32,7 +32,7 @@ __stow() {
 }
 
 __wallpaper() {
-    "${SCRIPT_PATH}/.local/script/wallpaper.sh" default
+    "${SCRIPT_PATH}/.local/script/wallpaper.sh"
 }
 
 main() {

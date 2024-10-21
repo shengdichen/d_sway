@@ -102,11 +102,12 @@ case "${1}" in
         shift
         __select "${@}"
         ;;
-    "default")
+    "show")
+        shift
         __use_default
+        __show "${@}"
         ;;
     *)
         __use_default
-        __show "${@}"
         ;;
 esac
