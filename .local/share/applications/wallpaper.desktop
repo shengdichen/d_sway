@@ -1,0 +1,28 @@
+[Desktop Entry]
+Type=Application
+Name=__wallpaper
+
+Actions=1;2;3;4
+
+[Desktop Action 1]
+Name=show/ask
+Exec=bash -c "${HOME}/.local/script/wallpaper.sh show && sleep 1"
+Terminal=true
+
+[Desktop Action 1]
+Name=show/hypr
+Exec=./.local/script/wallpaper.sh show --wm hypr
+
+[Desktop Action 1]
+Name=show/river
+Exec=./.local/script/wallpaper.sh show --wm river
+
+[Desktop Action 1]
+Name=update/hypr
+Exec=bash -c "${HOME}/.local/script/wallpaper.sh select --wm hypr && sleep 1"
+Terminal=true
+
+[Desktop Action 1]
+Name=update/river
+Exec=bash -c "${HOME}/.local/script/wallpaper.sh select --wm river && sleep 1"
+Terminal=true
