@@ -263,7 +263,7 @@ class HyprWorkspace:
 
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
-    PATTERN_SELECTION_PROMPT = re.compile(r"^.* \[ADDR: (.*)\].*$")
+    PATTERN_SELECTION_PROMPT = re.compile(r"^.* (0x[0-9a-f]*)$")
 
     def __init__(
         self,
@@ -593,12 +593,23 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             talk.HyprTalk("togglefloating").execute_as_dispatch()
 
     def selection_prompt(self) -> str:
-        style = prettyprint.Prettyprint().color_foreground("grey-bright")
-        str_addr = style.apply("[ADDR: ")
-        str_addr = f"{str_addr}{style.decorate_underline().apply(self._address)}"
-        str_addr = f"{str_addr}{style.undecorate_underline().apply("]")}"
+        greyer = prettyprint.Prettyprint().color_foreground("grey-bright")
 
-        return f"{self._title} {str_addr}"
+        str_class = f"{self._class.split(".")[-1] if self._class else "class?"}"
+        if str_class == "firefox-developer-edition":
+            str_class = "firefoxd"
+        str_class = (
+            f"{prettyprint.Prettyprint().cyan(str_class)}" f"{greyer.apply(">")}"
+        )
+
+        str_title = self._title or "title?"
+
+        str_addr = (
+            f"{greyer.apply(f"// {self._address[:2]}")}"
+            f"{greyer.decorate_underline().apply(self._address[2:])}"
+        )
+
+        return f"{str_class} {str_title}  {str_addr}"
 
     def make_master(self) -> None:
         while not self.is_master():
