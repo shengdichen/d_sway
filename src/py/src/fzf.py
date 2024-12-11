@@ -7,6 +7,7 @@ import typing
 class Fzf:
     def __init__(
         self,
+        fzf_ansi: bool = True,
         fzf_reverse: bool = True,
         fzf_height_perc: int = 100,
         fzf_no_sort: bool = False,
@@ -15,6 +16,8 @@ class Fzf:
         self._fzf = "fzf"
 
         self._config_fzf = ""
+        if fzf_ansi:
+            self._config_fzf = f"{self._config_fzf} --ansi"
         if fzf_reverse:
             self._config_fzf = f"{self._config_fzf} --reverse"
         if fzf_height_perc:
