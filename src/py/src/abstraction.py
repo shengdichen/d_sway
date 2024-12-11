@@ -266,7 +266,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     def __init__(
         self,
-        address: int,
+        address: str,  # str-repr of hex-int
         mapped: bool,
         hidden: bool,
         _at: tuple[int, int],
@@ -313,7 +313,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self._monitor = monitor
 
     @property
-    def address(self) -> int:
+    def address(self) -> str:
         return self._address
 
     @property
@@ -408,7 +408,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         raise RuntimeError(f"window> window not found [workspace: {workspace.id}]")
 
     @classmethod
-    def from_address(cls, address: int) -> "HyprWindow":
+    def from_address(cls, address: str) -> "HyprWindow":
         for j in cls.windows_json():
             if j["address"] == address:
                 return cls.from_json(j)
@@ -462,7 +462,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @classmethod
     def from_selection_prompt(cls, choice: str) -> "HyprWindow":
-        return cls.from_address(cls.PATTERN_SELECTION_PROMPT.match(choice).group(1))
+        m = cls.PATTERN_SELECTION_PROMPT.match(choice)
+        if not m:
+            raise RuntimeError(f"window> invalid choice {choice}")
+        return cls.from_address(m.group(1))
 
     def is_on_monitor(self, monitor: typing.Any) -> bool:
         return self._monitor == monitor
