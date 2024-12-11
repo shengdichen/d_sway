@@ -1,4 +1,5 @@
 import collections.abc as cabc
+import re
 import typing
 
 import talk
@@ -250,6 +251,9 @@ class HyprWorkspace:
     def is_special(self) -> bool:
         return self._name.startswith("special:")
 
+    def is_empty(self) -> bool:
+        return self._n_windows == 0
+
     @staticmethod
     def focus(workspace: typing.Union[str, "HyprWorkspace"]) -> None:
         if isinstance(workspace, HyprWorkspace):
@@ -258,6 +262,8 @@ class HyprWorkspace:
 
 
 class HyprWindow:  # pylint: disable=too-many-public-methods
+    PATTERN_SELECTION_PROMPT = re.compile(r"^.* \[ADDR: (.*)\].*$")
+
     def __init__(
         self,
         address: int,
@@ -273,9 +279,8 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         pid: int,
         xwayland: bool,
         pinned: bool,
-        is_fullscreen: bool,
-        fullscreen_mode: int,
-        fake_fullscreen: bool,
+        fullscreen_mode_internal: bool,
+        fullscreen_mode_client: int,
         grouped: list,
         swallowing: str,
         idx_focus: int,
@@ -297,9 +302,8 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         self._xwayland = xwayland
         self._pinned = pinned
 
-        self._is_fullscreen = is_fullscreen
-        self._fullscreen_mode = fullscreen_mode
-        self._fake_fullscreen = fake_fullscreen
+        self._fullscreen_mode_internal = fullscreen_mode_internal
+        self._fullscreen_mode_client = fullscreen_mode_client
 
         self._grouped = grouped
         self._swallowing = swallowing
@@ -314,7 +318,15 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     @property
     def is_fullscreen(self) -> bool:
-        return self._is_fullscreen
+        return self._fullscreen_mode_internal != 0
+
+    @property
+    def is_fullscreen_with_decoration(self) -> bool:
+        return self._fullscreen_mode_internal == 1
+
+    @property
+    def is_fullscreen_without_decoration(self) -> bool:
+        return self._fullscreen_mode_internal == 2
 
     @property
     def idx_focus(self) -> int:
@@ -347,9 +359,8 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             pid=j["pid"],
             xwayland=j["xwayland"],
             pinned=j["pinned"],
-            is_fullscreen=j["fullscreen"],
-            fullscreen_mode=j["fullscreenMode"],
-            fake_fullscreen=j["fakeFullscreen"],
+            fullscreen_mode_internal=j["fullscreen"],
+            fullscreen_mode_client=j["fullscreenClient"],
             grouped=j["grouped"],
             swallowing=j["swallowing"],
             idx_focus=j["focusHistoryID"],
@@ -378,6 +389,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         if not sort_by_focus:
             return jsons
         return sorted(jsons, key=lambda j: j["focusHistoryID"])
+
+    def opacity_toggle(self) -> None:
+        cmd = f"address:{self._address} opaque toggle"
+        talk.HyprTalk(cmd).execute_as_setprop()
 
     @classmethod
     def from_current(
@@ -425,6 +440,15 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         raise RuntimeError("window> no previous window")
 
     @classmethod
+    def from_previous_in_workspace(cls, workspace: HyprWorkspace) -> "HyprWindow":
+        try:
+            return next(cls.windows(workspace=workspace, sort_by_focus=True))
+        except StopIteration as e:
+            raise RuntimeError(
+                f"window> no previous window [workspace: {workspace.name}]"
+            ) from e
+
+    @classmethod
     def from_previous_relative(
         cls,
         relative_to: typing.Optional["HyprWindow"] = None,
@@ -435,6 +459,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             if window.idx_focus == idx_focus:
                 return window
         raise RuntimeError("window> no previous window")
+
+    @classmethod
+    def from_selection_prompt(cls, choice: str) -> "HyprWindow":
+        return cls.from_address(cls.PATTERN_SELECTION_PROMPT.match(choice).group(1))
 
     def is_on_monitor(self, monitor: typing.Any) -> bool:
         return self._monitor == monitor
@@ -500,30 +528,56 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def move_to_current(self) -> None:
         self.move_to_workspace(HyprWorkspace.from_current())
 
-    def fullscreen_on(self) -> None:
-        if not self._is_fullscreen:
-            HyprWindow.fullscreen_toggle()
+    def fullscreen_on(self, keep_decoration: bool = True) -> None:
+        if self.is_fullscreen:
+            return
+        HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=keep_decoration)
 
     def fullscreen_off(self) -> None:
-        if self._is_fullscreen:
+        if not self.is_fullscreen:
+            return
+
+        if self.is_fullscreen_with_decoration:
             HyprWindow.fullscreen_toggle()
+            return
+
+        # fullscreen without decoration
+        HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=False)
+
+    def fullscreen(self) -> None:
+        if self.is_fullscreen:
+            self.fullscreen_off()
+            return
+        self.fullscreen_on()
+
+    def fullscreen_mode_switch(self, guarantee_fullscreen: bool = True) -> None:
+        # not fullscreen -> fullscreen no-deco
+        if not self.is_fullscreen and guarantee_fullscreen:
+            self.fullscreen_on(keep_decoration=False)
+            return
+
+        # fullscreen with deco -> fullscreen no-deco
+        if self.is_fullscreen_with_decoration:
+            HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=False)
+            return
+
+        # fullscreen no-deco -> fullscreen with deco
+        HyprWindow.fullscreen_toggle()
 
     def fullscreen_cycle(self) -> None:
-        if not self._is_fullscreen:
+        if not self.is_fullscreen:
             HyprWindow.fullscreen_toggle()
             return
 
-        if self._fullscreen_mode == 1:  # fullscreen, with decoration
-            # make fullscreen, now withOUT decoration
-            for __ in range(2):
-                HyprWindow.fullscreen_toggle(keep_decoration=False)
+        if self.is_fullscreen_without_decoration:
+            HyprWindow.fullscreen_toggle(keep_decoration_when_fullscreen=False)
             return
 
-        HyprWindow.fullscreen_toggle()  # unfullscreen
+        self.fullscreen_off()
 
     @staticmethod
-    def fullscreen_toggle(keep_decoration: bool = True) -> None:
-        mode = 1 if keep_decoration else 0
+    def fullscreen_toggle(keep_decoration_when_fullscreen: bool = True) -> None:
+        mode = 1 if keep_decoration_when_fullscreen else 0
         talk.HyprTalk(f"fullscreen {mode}").execute_as_dispatch()
 
     def float_on(self) -> None:
@@ -536,6 +590,10 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
 
     def selection_prompt(self) -> str:
         return f"{self._title} [ADDR: {self._address}]"
+
+    def make_master(self) -> None:
+        while not self.is_master():
+            self.swap_within_workspace(positive_dir=False)
 
     def is_master(self, restore_focus: bool = True) -> bool:
         is_master = self.address == HyprWorkspace.window_master().address

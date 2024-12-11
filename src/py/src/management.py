@@ -21,12 +21,15 @@ class Management:
 
     def fullscreen(self) -> None:
         n_windows = self._workspace.n_windows
+        if n_windows <= 1:
+            return
+        abstraction.HyprWindow.from_current().fullscreen()
+
+    def fullscreen_mode(self) -> None:
+        n_windows = self._workspace.n_windows
         if n_windows == 0:
             return
-        if n_windows == 1:
-            abstraction.HyprWindow.fullscreen_toggle(keep_decoration=False)
-            return
-        abstraction.HyprWindow.from_current().fullscreen_cycle()
+        abstraction.HyprWindow.from_current().fullscreen_mode_switch()
 
     def make_only(self) -> None:
         n_windows = self._workspace.n_windows
@@ -56,7 +59,7 @@ class Management:
             window_prev.focus()  # focus only if non-hold
 
     def window_to_workspace(self, workspace: str) -> None:
-        if self._workspace.n_windows == 0:
+        if self._workspace.is_empty():
             return
 
         need_refocus = False
@@ -74,16 +77,26 @@ class Management:
         abstraction.HyprWorkspace.focus(workspace)
 
     def focus_to_workspace(self, workspace: str) -> None:
+        if self._workspace == workspace:
+            return
+
         try:
             ws = abstraction.HyprWorkspace.from_name(workspace)
-        except ValueError:
+        except ValueError:  # workspace does not exist
             abstraction.HyprWorkspace.focus(workspace)
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
             return
 
-        abstraction.HyprWorkspace.focus(workspace)
-        if ws.n_windows == 0:
+        if ws.is_empty():  # workspace exists, but has no windows
+            abstraction.HyprWorkspace.focus(ws)
+            # force the focus-border to new workspace
+            # (will otherwise remain in previous workspace, causing visual confusion)
             launch.Launch.launch_foot(use_footclient=True, as_float=False)
+            return
+
+        # sometimes hyprland's workspace-focus call (mysteriously) does not move
+        # the focus-border to the new workspace; use the window-focus call instead
+        abstraction.HyprWindow.from_previous_in_workspace(ws).focus()
 
     def workspace_to_monitor(self, monitor: str) -> None:
         self._monitor_focus_workspace_previous()
@@ -112,6 +125,9 @@ class Management:
                 abstraction.HyprWorkspace.focus(window.workspace)
                 break
 
+    def opacity(self) -> None:
+        abstraction.HyprWindow.from_current().opacity_toggle()
+
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -126,6 +142,8 @@ if __name__ == "__main__":
             Management().focus_previous()
         elif mode == "fullscreen":
             Management().fullscreen()
+        elif mode == "fullscreen-mode":
+            Management().fullscreen_mode()
         elif mode == "only":
             Management().make_only()
         elif mode == "quit":
@@ -136,6 +154,8 @@ if __name__ == "__main__":
             Management().window_to_workspace(*args)
         elif mode == "workspace-to-monitor":
             Management().workspace_to_monitor(*args)
+        elif mode == "opacity":
+            Management().opacity()
         else:
             raise RuntimeError("what mode?")
 
