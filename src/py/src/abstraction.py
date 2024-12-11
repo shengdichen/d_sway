@@ -2,6 +2,7 @@ import collections.abc as cabc
 import re
 import typing
 
+import prettyprint
 import talk
 
 
@@ -592,7 +593,12 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
             talk.HyprTalk("togglefloating").execute_as_dispatch()
 
     def selection_prompt(self) -> str:
-        return f"{self._title} [ADDR: {self._address}]"
+        style = prettyprint.Prettyprint().color_foreground("grey-bright")
+        str_addr = style.apply("[ADDR: ")
+        str_addr = f"{str_addr}{style.decorate_underline().apply(self._address)}"
+        str_addr = f"{str_addr}{style.undecorate_underline().apply("]")}"
+
+        return f"{self._title} {str_addr}"
 
     def make_master(self) -> None:
         while not self.is_master():
