@@ -6,6 +6,7 @@ import abstraction
 import hold
 import launch
 import talk
+from definition import DEFINITION
 
 logger = logging.getLogger(__name__)
 
@@ -130,9 +131,7 @@ class Management:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(module)s [%(levelname)s]> %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(**DEFINITION.LOG_CONFIG, level=logging.INFO)
 
     if len(sys.argv) == 1:
         raise RuntimeError("hypr/main> say what?")

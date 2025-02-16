@@ -8,6 +8,7 @@ import abstraction
 import fzf
 import launch
 import talk
+from definition import DEFINITION
 
 
 class Holding:
@@ -209,9 +210,7 @@ class Holding:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(module)s [%(levelname)s]> %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(**DEFINITION.LOG_CONFIG, level=logging.INFO)
 
     if len(sys.argv) == 1:
         raise RuntimeError("hypr/hold> say what?")
