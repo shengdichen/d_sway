@@ -128,6 +128,29 @@ class Management:
     def opacity(self) -> None:
         abstraction.HyprWindow.from_current().opacity_toggle()
 
+    def swap(self) -> None:
+        window_curr = abstraction.HyprWindow.from_current()
+        workspace_curr = window_curr.workspace
+        window_new = abstraction.HyprWindow.from_previous()
+        workspace_new = window_new.workspace
+
+        if workspace_curr == workspace_new:
+            logger.debug(
+                f"management/swap> both windows in {workspace_curr}, skipping..."
+            )
+            return
+
+        window_curr.fullscreen_off()
+        window_new.fullscreen_off()
+
+        window_new.move_to_workspace(workspace_curr)
+        window_curr.move_to_workspace(workspace_new)
+
+        window_curr.swap_to_limit_left()
+        window_curr.swap_to_limit_down()
+
+        window_new.focus()
+
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -156,6 +179,8 @@ if __name__ == "__main__":
             Management().workspace_to_monitor(*args)
         elif mode == "opacity":
             Management().opacity()
+        elif mode == "swap":
+            Management().swap()
         else:
             raise RuntimeError("what mode?")
 
