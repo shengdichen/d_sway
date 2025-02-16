@@ -595,17 +595,15 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def selection_prompt(self) -> str:
         greyer = prettyprint.Prettyprint().color_foreground("grey-bright")
 
-        str_class = f"{self._class.split(".")[-1] if self._class else "class?"}"
+        str_class = f"{self._class.split('.')[-1] if self._class else 'class?'}"
         if str_class == "firefox-developer-edition":
             str_class = "firefoxd"
-        str_class = (
-            f"{prettyprint.Prettyprint().cyan(str_class)}" f"{greyer.apply(">")}"
-        )
+        str_class = f"{prettyprint.Prettyprint().cyan(str_class)}{greyer.apply('>')}"
 
         str_title = self._title or "title?"
 
         str_addr = (
-            f"{greyer.apply(f"// {self._address[:2]}")}"
+            f"{greyer.apply(f'// {self._address[:2]}')}"
             f"{greyer.decorate_underline().apply(self._address[2:])}"
         )
 

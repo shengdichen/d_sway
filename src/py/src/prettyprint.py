@@ -98,7 +98,7 @@ class Prettyprint:
         return f"{self._make_segment()}{txt}{self._make_reset()}"
 
     def _make_segment(self) -> str:
-        return f"\033[{";".join((str(a) for a in self._atoms))}m"
+        return f"\033[{';'.join((str(a) for a in self._atoms))}m"
 
     @staticmethod
     def _make_reset() -> str:
