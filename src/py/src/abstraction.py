@@ -11,84 +11,93 @@ class HyprMonitor:
         self,
         _id: int,
         name: str,
+        enabled: bool,
+        enabled_dpms: bool,
+        #
         description: str,
         make: str,
         model: str,
         serial: str,
-        width: int,
-        height: int,
+        available_modes: list[str],
+        #
+        pos_x: int,
+        pos_y: int,
+        size_x: int,
+        size_y: int,
+        coords_reserved: list,
+        #
+        scale: float,
+        transform: int,
         refresh_rate: float,
-        x: int,
-        y: int,
+        using_vrr: bool,
+        using_tearing: bool,
+        profile: str,
+        #
+        is_current: bool,
         active_workspace_id: int,
         active_workspace_name: str,
         special_workspace_id: int,
         special_workspace_name: str,
-        reserved: list,
-        scale: float,
-        transform: int,
-        focused: bool,
-        dpms_status: bool,
-        vrr: bool,
-        actively_tearing: bool,
-        disabled: bool,
-        current_format: str,
-        available_modes: list[str],
     ):  # pylint: disable=too-many-locals,too-many-positional-arguments
-        self._id = _id
-        self._name = name
+        self._id, self._name = _id, name
+        self._enabled, self._enabled_dpms = enabled, enabled_dpms
+
         self._description = description
         self._make = make
         self._model = model
         self._serial = serial
-        self._width = width
-        self._height = height
+        self._available_modes = available_modes
+
+        self._pos_x, self._pos_y = pos_x, pos_y
+        self._size_x, self._size_y = size_x, size_y
+        # REF:
+        #   https://wiki.hyprland.org/Configuring/Monitors/#custom-reserved-area
+        self._coords_reserved = coords_reserved
+
+        self._scale = scale
+        self._transform = transform
         self._refresh_rate = refresh_rate
-        self._x = x
-        self._y = y
+        self._using_vrr, self._using_tearing = using_vrr, using_tearing
+        self._profile = profile
+
+        self._is_current = is_current
         self._active_workspace_id = active_workspace_id
         self._active_workspace_name = active_workspace_name
         self._special_workspace_id = special_workspace_id
         self._special_workspace_name = special_workspace_name
-        self._reserved = reserved
-        self._scale = scale
-        self._transform = transform
-        self._focused = focused
-        self._dpms_status = dpms_status
-        self._vrr = vrr
-        self._actively_tearing = actively_tearing
-        self._disabled = disabled
-        self._current_format = current_format
-        self._available_modes = available_modes
 
     @classmethod
     def from_json(cls, js: dict) -> "HyprMonitor":
         return cls(
             _id=js["id"],
             name=js["name"],
+            enabled=not js["disabled"],
+            enabled_dpms=js["dpmsStatus"],
+            #
             description=js["description"],
             make=js["make"],
             model=js["model"],
             serial=js["serial"],
-            width=js["width"],
-            height=js["height"],
+            available_modes=js["availableModes"],
+            #
+            pos_x=js["x"],
+            pos_y=js["y"],
+            size_x=js["width"],
+            size_y=js["height"],
+            coords_reserved=js["reserved"],
+            #
+            scale=js["scale"],
+            transform=js["transform"],
             refresh_rate=js["refreshRate"],
-            x=js["x"],
-            y=js["y"],
+            using_vrr=js["vrr"],
+            using_tearing=js["activelyTearing"],
+            profile=js["currentFormat"],
+            #
+            is_current=js["focused"],
             active_workspace_id=js["activeWorkspace"]["id"],
             active_workspace_name=js["activeWorkspace"]["name"],
             special_workspace_id=js["specialWorkspace"]["id"],
             special_workspace_name=js["specialWorkspace"]["name"],
-            reserved=js["reserved"],
-            scale=js["scale"],
-            transform=js["transform"],
-            focused=js["focused"],
-            dpms_status=js["dpmsStatus"],
-            vrr=js["vrr"],
-            actively_tearing=js["activelyTearing"],
-            disabled=js["disabled"],
-            current_format=js["currentFormat"],
-            available_modes=js["availableModes"],
         )
 
     @property
@@ -133,7 +142,10 @@ class HyprMonitor:
 
     @classmethod
     def from_current(cls) -> "HyprMonitor":
-        return HyprWorkspace.from_current().monitor
+        for js in cls.monitors_json():
+            if js["focused"]:
+                return cls.from_json(js)
+        raise RuntimeError("monitor> not focused on any monitor")
 
     def print(self) -> None:
         print(f"monitor> {self._id}.{self._name}")
