@@ -156,18 +156,18 @@ class HyprWorkspace:
         self,
         _id: int,
         name: str,
+        #
+        is_fullscreen: bool,
         n_windows: int,
-        has_fullscreen: bool,
-        last_active_window_id: str,
-        last_active_window_title: str,
+        window_current_addr: str,
+        #
         monitor: HyprMonitor,
     ):  # pylint: disable=too-many-positional-arguments
-        self._id = _id
-        self._name = name
+        self._id, self._name = _id, name
+
+        self._is_fullscreen = is_fullscreen
         self._n_windows = n_windows
-        self._has_fullscreen = has_fullscreen
-        self._last_active_window_id = last_active_window_id
-        self._last_active_window_title = last_active_window_title
+        self._window_current_addr = window_current_addr
 
         self._monitor = monitor
 
@@ -201,11 +201,12 @@ class HyprWorkspace:
         return cls(
             _id=j["id"],
             name=j["name"],
+            #
+            is_fullscreen=j["hasfullscreen"],
             n_windows=j["windows"],
-            has_fullscreen=j["hasfullscreen"],
-            last_active_window_id=j["lastwindow"],
-            last_active_window_title=j["lastwindowtitle"],
-            monitor=HyprMonitor.from_name(j["monitor"]),
+            window_current_addr=j["lastwindow"],
+            #
+            monitor=HyprMonitor.from_id(j["monitorID"]),
         )
 
     @classmethod
@@ -245,8 +246,8 @@ class HyprWorkspace:
 
     def print(self) -> None:
         print(
-            f'workspace> ({self._id}."{self._name}"): -> '
-            f"({self._last_active_window_id}: {self._last_active_window_title})"
+            f'workspace> (id={self._id}, name="{self._name}", size={self._n_windows}) '
+            f"on monitor [{self._monitor.name}]"
         )
 
     def windows(self) -> cabc.Generator["HyprWindow", None, None]:
