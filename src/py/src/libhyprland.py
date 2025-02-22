@@ -1,6 +1,7 @@
 import collections.abc as cabc
 import logging
 import re
+import time
 import typing
 
 import launch
@@ -57,6 +58,33 @@ class WindowHyprland(libwm.Window):
             title_current=j["title"],
         )
 
+    @classmethod
+    def from_json_current(cls) -> "WindowHyprland":
+        return cls.from_json(WindowHyprland.json_current())
+
+    @staticmethod
+    def jsons() -> list[dict]:
+        return talk.HyprTalk("clients").execute_to_json()
+
+    @staticmethod
+    def jsons_by_time() -> cabc.Generator[dict, None, None]:
+        yield from sorted(WindowHyprland.jsons(), key=lambda _j: _j["focusHistoryID"])
+
+    @staticmethod
+    def json_current() -> dict:
+        return talk.HyprTalk("activewindow").execute_to_json()
+
+    @classmethod
+    def from_footclient(cls) -> "WindowHyprland":
+        launch.Launch.launch_foot(use_footclient=True, as_float=False)
+
+        cadence = 0.1
+        while True:
+            if j := WindowHyprland.json_current():
+                return cls.from_json(j)
+            logger.info(f"window/hyprland> waiting {cadence} for hyprland to catchup")
+            time.sleep(cadence)
+
     def as_addr(self) -> str:
         return f"address:{self._identifier}"
 
@@ -97,7 +125,7 @@ class WindowHyprland(libwm.Window):
         return m.group(1)
 
     def is_grouped(self) -> bool:
-        for j in talk.HyprTalk("clients").execute_to_json():
+        for j in WindowHyprland.jsons():
             if j["address"] == self:
                 return bool(j["grouped"])
         raise libwm.WindowError
@@ -183,7 +211,7 @@ class WorkspaceHyprland(libwm.Workspace):
         logger.debug(f"workspace/hyprland> goto-new [{workspace}]")
         cmd = f"workspace {workspace}"
         talk.HyprTalk(cmd).execute_as_dispatch()
-        launch.Launch.launch_foot(use_footclient=True, as_float=False)
+        WindowHyprland.from_footclient()
 
 
 class HoldHyprland(libwm.Workspace):
@@ -360,10 +388,7 @@ class ManagementHyprland(libwm.Management):
             logging.debug(f"({monitor}) += ({workspace})")
 
     def load_windows(self) -> None:
-        for j in sorted(
-            talk.HyprTalk("clients").execute_to_json(),
-            key=lambda _j: _j["focusHistoryID"],
-        ):
+        for j in WindowHyprland.jsons_by_time():
             window = WindowHyprland.from_json(j)
             self._windows.append(window)
 
@@ -417,21 +442,19 @@ class ManagementHyprland(libwm.Management):
         raise libwm.WindowError("libhyprland> no previous non-hold window")
 
     def hold_is_active(self) -> bool:
-        return HoldHyprland.is_hold(
-            talk.HyprTalk("activewindow").execute_to_json()["workspace"]["name"]
-        )
+        return HoldHyprland.is_hold(WindowHyprland.json_current()["workspace"]["name"])
 
     def hold_peek(self) -> None:
         if not self._hold:
             logger.warning("libhyprland> hold does not exist yet")
             HoldHyprland.toggle()
-            launch.Launch.launch_foot(use_footclient=True, as_float=False)
+            WindowHyprland.from_footclient().group_toggle()
             return
 
         if self._hold.is_empty():
             logger.warning("libhyprland> hold is empty")
             HoldHyprland.show()
-            launch.Launch.launch_foot(use_footclient=True, as_float=False)
+            WindowHyprland.from_footclient().group_toggle()
             return
 
         HoldHyprland.show()
