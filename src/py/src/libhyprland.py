@@ -185,6 +185,14 @@ class WorkspaceHyprland(libwm.Workspace):
     def from_json(cls, j: dict) -> "WorkspaceHyprland":
         return cls(identifier=j["id"], name=j["name"])
 
+    @staticmethod
+    def jsons() -> cabc.Sequence[dict]:
+        return talk.HyprTalk("workspaces").execute_to_json()
+
+    @staticmethod
+    def json_current() -> dict:
+        return talk.HyprTalk("activeworkspace").execute_to_json()
+
     def add(self, window: WindowHyprland) -> None:
         logger.info(f"workspace/hyprland> [{self}]: adding [{window}]")
         super().add(window)
@@ -263,7 +271,7 @@ class HoldHyprland(libwm.Workspace):
 
     @staticmethod
     def show() -> None:
-        monitor_id = talk.HyprTalk("activeworkspace").execute_to_json()["monitorID"]
+        monitor_id = WorkspaceHyprland.json_current()["monitorID"]
 
         for j in talk.HyprTalk("monitors").execute_to_json():
             if j["specialWorkspace"]["name"] != HoldHyprland.NAME_FULL:
@@ -283,7 +291,7 @@ class HoldHyprland(libwm.Workspace):
 
     @staticmethod
     def hide() -> None:
-        monitor_id = talk.HyprTalk("activeworkspace").execute_to_json()["monitorID"]
+        monitor_id = WorkspaceHyprland.json_current()["monitorID"]
 
         for j in talk.HyprTalk("monitors").execute_to_json():
             if j["specialWorkspace"]["name"] != HoldHyprland.NAME_FULL:
@@ -369,7 +377,7 @@ class ManagementHyprland(libwm.Management):
             self._monitors_workspace_current.append(j["activeWorkspace"]["id"])
 
     def load_workspaces(self) -> None:
-        for j in talk.HyprTalk("workspaces").execute_to_json():
+        for j in WorkspaceHyprland.jsons():
             if HoldHyprland.is_hold(j["name"]):
                 self._hold = HoldHyprland.from_json(j)
                 continue
@@ -413,9 +421,7 @@ class ManagementHyprland(libwm.Management):
         WorkspaceHyprland.add_new(workspace, window)
 
     def workspace_current(self) -> WorkspaceHyprland:
-        return self.workspace_find(
-            talk.HyprTalk("activeworkspace").execute_to_json()["id"]
-        )
+        return self.workspace_find(WorkspaceHyprland.json_current()["id"])
 
     def _window_from_format_human(self, format_human: typing.Any) -> WindowHyprland:
         for window in self._windows:
