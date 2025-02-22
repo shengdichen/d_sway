@@ -29,7 +29,12 @@ __stow() {
         cd .. && stow -R "$(basename "${SCRIPT_PATH}")"
     )
     (
-        cd "${DIR_HYPR}" && ln -s -f "${SCRIPT_PATH}/src/py/src" .
+        cd "./src/py/src" || exit 3
+        mkdir -p "${DIR_HYPR}/src/common"
+        stow -R --target "${DIR_HYPR}/src/common" "common"
+        mkdir -p "${DIR_HYPR}/src/hyprland"
+        stow -R --target "${DIR_HYPR}/src/hyprland" "hyprland"
+        ln -srf "$(realpath "./hyprland.py")" "${DIR_HYPR}/src/."
     )
 }
 

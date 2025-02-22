@@ -3,10 +3,10 @@ import pathlib
 import sys
 import typing
 
-import launch
-import libhyprland as libhp
-import libwm
-from definition import DEFINITION
+from common import libwm
+from common.definition import DEFINITION
+from hyprland import launch
+from hyprland import libhyprland as libhp
 
 logger = logging.getLogger(__name__)
 

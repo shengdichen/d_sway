@@ -4,10 +4,8 @@ import re
 import time
 import typing
 
-import launch
-import libwm
-import prettyprint
-import talk
+from common import libwm, prettyprint
+from hyprland import launch, talk
 
 logger = logging.getLogger(__name__)
 

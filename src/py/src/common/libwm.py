@@ -1,7 +1,7 @@
 import collections.abc as cabc
 import typing
 
-import fzf
+from common import fzf
 
 
 class Window:

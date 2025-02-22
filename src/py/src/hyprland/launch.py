@@ -1,7 +1,7 @@
 import collections.abc as cabc
 import typing
 
-import talk
+from hyprland import talk
 
 
 class Launch:
