@@ -162,10 +162,12 @@ class Front:
             )
             return
 
-        logger.info(f"hyprland/replace>  [{window}] -> [{window_new}]")
+        pos = window.get_pos()
+        logger.info(f"hyprland/replace>  [{window}]@{pos} -> [{window_new}]")
         workspace.add(self._management.hold_split(window_new))
         self._management.hold_add(window)
         libhp.HoldHyprland.toggle()
+        libhp.Geometry().window_to_pos_besteffort(window_new, pos)
 
 
 if __name__ == "__main__":

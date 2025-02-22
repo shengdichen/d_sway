@@ -163,6 +163,12 @@ class WindowHyprland(libwm.Window):
         logger.debug(f"window/hyprland> toggle window-grouping [{self}]")
         talk.HyprTalk("togglegroup").execute_as_dispatch()
 
+    def get_pos(self) -> tuple[int, int]:
+        for j in WindowHyprland.jsons_by_time():
+            if j["address"] == self:
+                return j["at"]
+        raise libwm.WindowError
+
 
 class WorkspaceHyprland(libwm.Workspace):
     def __init__(self, identifier: int, name: str):
@@ -351,6 +357,27 @@ class MonitorHyprland(libwm.Monitor):
             size_x=js["width"],
             size_y=js["height"],
         )
+
+
+class Geometry:
+    def window_to_pos_besteffort(
+        self, window: WindowHyprland, pos: tuple[int, int]
+    ) -> None:
+        if (pos_curr := window.get_pos()) == pos:
+            logger.warning(
+                f"geometry/hyprland> [{window}] already at {pos}, skipping..."
+            )
+            return
+
+        logger.info(f"geometry/hyprland> [{window}] -> {pos}...")
+        for __ in range(5):
+            logger.info(
+                f"geometry/hyprland> rotating [{window}]: current pos {pos_curr}"
+            )
+            talk.HyprTalk("swapprev").execute_as_layoutmsg()
+            if (pos_curr := window.get_pos()) == pos:
+                logger.info(f"geometry/hyprland> arrived at target {pos}, done!")
+                return
 
 
 class ManagementHyprland(libwm.Management):
