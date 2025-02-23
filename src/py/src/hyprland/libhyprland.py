@@ -167,6 +167,19 @@ class WindowHyprland(libwm.Window):
                 return j["at"]
         raise libwm.WindowError
 
+    def opacity_toggle(self) -> None:
+        logger.debug(f"window/hyprland> opacity-toggle [{self}]")
+        cmd = f"{self.as_addr()} opaque toggle"
+        talk.HyprTalk(cmd).execute_as_setprop()
+
+    def fullscreen_toggle(self) -> None:
+        logger.debug(f"window/hyprland> fullscreen-toggle [{self}]")
+        talk.HyprTalk("fullscreen 1").execute_as_dispatch()
+
+    def fullscreen_toggle_nodecoration(self) -> None:
+        logger.debug(f"window/hyprland> fullscreen-toggle, no-decoration [{self}]")
+        talk.HyprTalk("fullscreen 0").execute_as_dispatch()
+
 
 class WorkspaceHyprland(libwm.Workspace):
     def __init__(self, identifier: int, name: str):

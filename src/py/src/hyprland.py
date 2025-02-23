@@ -116,6 +116,34 @@ class Front:
         window_current.close()
         window_prev.goto()
 
+    def window_current_fullscreen_toggle(self, with_decoration: bool = True) -> None:
+        self._management.load()
+
+        try:
+            window = self._management.window_current()
+        except libwm.WindowError:
+            logger.warning("hyprland> no window to toggle fullscreen-ness, skipping...")
+            return
+
+        if with_decoration:
+            logger.info(f"hyprland> fullscreen-toggle: [{window}]")
+            window.fullscreen_toggle()
+            return
+        logger.info(f"hyprland> fullscreen-toggle, no-decoration: [{window}]")
+        window.fullscreen_toggle_nodecoration()
+
+    def window_current_opacity_toggle(self) -> None:
+        self._management.load()
+
+        try:
+            window = self._management.window_current()
+        except libwm.WindowError:
+            logger.warning("hyprland> no window to toggle opacity, skipping...")
+            return
+
+        logger.info(f"hyprland> toggling opacity: [{window}]")
+        window.opacity_toggle()
+
     def window_make_unique(self) -> None:
         self._management.load()
 
@@ -218,6 +246,15 @@ if __name__ == "__main__":
             return
         if mode == "window-current-close":
             Front().window_current_close(*args)
+            return
+        if mode == "window-current-fullscreen-toggle":
+            Front().window_current_fullscreen_toggle()
+            return
+        if mode == "window-current-fullscreen-toggle-nodecoration":
+            Front().window_current_fullscreen_toggle(with_decoration=False)
+            return
+        if mode == "window-current-opacity-toggle":
+            Front().window_current_opacity_toggle(*args)
             return
         if mode == "window-make-unique":
             Front().window_make_unique()
