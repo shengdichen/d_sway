@@ -17,6 +17,11 @@ class Front:
 
     def workspace_switch(self, workspace: str) -> None:
         self._management.load()
+
+        if self._management.workspace_current() == workspace:
+            logger.info(f"hyprland> already on [{workspace}], skipping")
+            return
+
         logger.info(f"hyprland> workspace [{workspace}]: switch")
         self._management.workspace_switch(workspace)
 
@@ -61,6 +66,7 @@ class Front:
     def hold_split_cmd(self) -> None:
         self._management.load()
         workspace = self._management.workspace_current()
+        logger.info(f"hyprland/hold-split> [{workspace}]")
         for window in self._management.hold_choose_windows():
             workspace.add(self._management.hold_split(window))
 
@@ -118,6 +124,11 @@ class Front:
 
     def window_current_fullscreen_toggle(self, with_decoration: bool = True) -> None:
         self._management.load()
+
+        n_windows = self._management.workspace_current().n_windows()
+        if n_windows < 2:
+            logger.warning("hyprland> no need to fullscreen, skipping...")
+            return
 
         try:
             window = self._management.window_current()

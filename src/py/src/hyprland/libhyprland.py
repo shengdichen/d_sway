@@ -58,7 +58,9 @@ class WindowHyprland(libwm.Window):
 
     @classmethod
     def from_json_current(cls) -> "WindowHyprland":
-        return cls.from_json(WindowHyprland.json_current())
+        if j := WindowHyprland.json_current():
+            return cls.from_json(j)
+        raise libwm.WindowError
 
     @staticmethod
     def jsons() -> list[dict]:
@@ -70,6 +72,8 @@ class WindowHyprland(libwm.Window):
 
     @staticmethod
     def json_current() -> dict:
+        # will return the empty dict when not focused on any window: for example, after the last
+        # window of current workspace is closed
         return talk.HyprTalk("activewindow").execute_to_json()
 
     @classmethod
@@ -207,7 +211,18 @@ class WorkspaceHyprland(libwm.Workspace):
         return talk.HyprTalk("workspaces").execute_to_json()
 
     @staticmethod
-    def json_current() -> dict:
+    def json_current_nonspecial() -> dict:
+        # NOTE:
+        #   |activeworkspace| considers only non-special workspaces: if on special
+        #   workspace, will return the non-special workspace in background
+        # NOTE:
+        #   to also consider special workspaces, use |activewindow| and access
+        #   ["workspace"]["id" OR "name"] if |activewindow| returns non-empty dict, i.e.,
+        #   has currently focused window; otherwise the logic is much more complicated: see
+        #   |ManagementHyprland| for implementation
+        # NOTE:
+        #   this is guaranteed to be always valid (non-empty) even if no window exists
+        #   (on current workspace or even globally)
         return talk.HyprTalk("activeworkspace").execute_to_json()
 
     def add(self, window: WindowHyprland) -> None:
@@ -288,7 +303,7 @@ class HoldHyprland(libwm.Workspace):
 
     @staticmethod
     def show() -> None:
-        monitor_id = WorkspaceHyprland.json_current()["monitorID"]
+        monitor_id = WorkspaceHyprland.json_current_nonspecial()["monitorID"]
 
         for j in talk.HyprTalk("monitors").execute_to_json():
             if j["specialWorkspace"]["name"] != HoldHyprland.NAME_FULL:
@@ -308,7 +323,7 @@ class HoldHyprland(libwm.Workspace):
 
     @staticmethod
     def hide() -> None:
-        monitor_id = WorkspaceHyprland.json_current()["monitorID"]
+        monitor_id = WorkspaceHyprland.json_current_nonspecial()["monitorID"]
 
         for j in talk.HyprTalk("monitors").execute_to_json():
             if j["specialWorkspace"]["name"] != HoldHyprland.NAME_FULL:
@@ -394,8 +409,10 @@ class Geometry:
 class ManagementHyprland(libwm.Management):
     def __init__(self):
         super().__init__()
-        self._monitors_workspace_current = []
         self._hold: HoldHyprland = None  # type: ignore [annotation-unchecked]
+
+        self._monitors_workspace_current = []
+        self._monitor_to_workspaces: dict[int, tuple[int, str]] = {}
 
     @property
     def hold(self) -> HoldHyprland:
@@ -412,7 +429,17 @@ class ManagementHyprland(libwm.Management):
                     size_y=j["height"],
                 )
             )
+            self._monitor_to_workspaces[j["id"]] = (
+                j["activeWorkspace"]["id"],
+                j["specialWorkspace"]["name"],
+            )
             self._monitors_workspace_current.append(j["activeWorkspace"]["id"])
+
+        logger.debug(
+            "libhyprland/load-monitors> "
+            "monitor->(workspace-nonspecial, workspace-special): "
+            f"{self._monitor_to_workspaces}"
+        )
 
     def load_workspaces(self) -> None:
         for j in WorkspaceHyprland.jsons():
@@ -459,7 +486,37 @@ class ManagementHyprland(libwm.Management):
         WorkspaceHyprland.add_new(workspace, window)
 
     def workspace_current(self) -> WorkspaceHyprland:
-        return self.workspace_find(WorkspaceHyprland.json_current()["id"])
+        wid = WorkspaceHyprland.json_current_nonspecial()["id"]
+        for workspace_normal, workspace_special in self._monitor_to_workspaces.values():
+            if workspace_normal != wid:
+                continue
+            if not workspace_special:
+                workspace = self.workspace_find(workspace_normal)
+                logger.info(
+                    "libhyprland/workspace-current> monitor showing only non-special "
+                    f"workspace [{workspace}]"
+                )
+                return workspace
+            if HoldHyprland.is_hold(workspace_special):
+                workspace = self.workspace_find(workspace_normal)
+                logger.info(
+                    "libhyprland/workspace-current> monitor showing non-special AND "
+                    f"special workspace HOLD: ignoring HOLD and using non-special [{workspace}]"
+                )
+                return workspace
+            workspace = self.workspace_find(workspace_special)
+            logger.info(
+                "libhyprland/workspace-current> monitor showing non-special AND "
+                f"special workspace: preferring special [{workspace}]"
+            )
+            return workspace
+        logger.error(
+            "libhyprland/workspace-current> non found: something is seriously wrong..."
+        )
+        raise libwm.WorkspaceError  # this should never happen
+
+    def workspace_current_nonspecial(self) -> WorkspaceHyprland:
+        return self.workspace_find(WorkspaceHyprland.json_current_nonspecial()["id"])
 
     def _window_from_format_human(self, format_human: typing.Any) -> WindowHyprland:
         for window in self._windows:
@@ -486,7 +543,10 @@ class ManagementHyprland(libwm.Management):
         raise libwm.WindowError("libhyprland> no previous non-hold window")
 
     def hold_is_active(self) -> bool:
-        return HoldHyprland.is_hold(WindowHyprland.json_current()["workspace"]["name"])
+        for __, workspace_special in self._monitor_to_workspaces.values():
+            if HoldHyprland.is_hold(workspace_special):
+                return True
+        return False
 
     def hold_peek(self) -> None:
         if not self._hold:
