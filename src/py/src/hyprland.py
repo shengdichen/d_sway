@@ -58,7 +58,7 @@ class Front:
             window_prev = None
 
         self._management.hold_add(window)
-        libhp.HoldHyprland.toggle()
+        self._management.hold.toggle()
         if window_prev:
             logger.info(f"hyprland> window-prev [{window_prev}]: switch")
             window_prev.goto()
@@ -177,7 +177,7 @@ class Front:
         for w in workspace.windows():
             if w != window:
                 self._management.hold_add(w)
-        libhp.HoldHyprland.toggle()
+        self._management.hold.toggle()
 
     def window_replace_cmd(self) -> None:
         self._management.load()
@@ -205,7 +205,7 @@ class Front:
         logger.info(f"hyprland/replace>  [{window}]@{pos} -> [{window_new}]")
         workspace.add(self._management.hold_split(window_new))
         self._management.hold_add(window)
-        libhp.HoldHyprland.toggle()
+        self._management.hold.toggle()
         libhp.Geometry().window_to_pos_besteffort(window_new, pos)
 
 
