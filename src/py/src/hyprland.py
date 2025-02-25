@@ -202,6 +202,45 @@ class Front:
         self._management.hold.toggle()
         libhp.Geometry().window_to_pos_besteffort(window_new, pos)
 
+    def windows_swap(self) -> None:
+        self._management.load()
+        try:
+            window = self._management.window_current()
+        except libwm.WindowError:
+            logger.warning(
+                "hyprland/windows-swap> no current window to swap, skipping..."
+            )
+            return
+        try:
+            window_prev = self._management.window_prev_nonhold()
+        except libwm.WindowError:
+            logger.warning(
+                "hyprland/windows-swap> no previous window to swap, skipping..."
+            )
+            return
+
+        workspace = self._management.workspace_of_window(window)
+        pos = window.get_pos()
+        workspace_prev = self._management.workspace_of_window(window_prev)
+        pos_prev = window_prev.get_pos()
+        if workspace != workspace_prev:
+            logger.info(
+                f"hyprland/windows-swap> ([{window}] @ {pos} on [{workspace}]) "
+                f"<-> ([{window_prev}] @ {pos_prev} on [{workspace_prev}])"
+            )
+            workspace.add(window_prev)
+            workspace_prev.add(window)
+        else:
+            logger.info(
+                f"hyprland/windows-swap> ([{window}] @ {pos}) "
+                f"<-> ([{window_prev}] @ {pos_prev}); both on [{workspace_prev}]"
+            )
+
+        geometry = libhp.Geometry()
+        geometry.window_to_pos_besteffort(window, pos_prev)
+        window_prev.goto()
+        geometry.window_to_pos_besteffort(window_prev, pos)
+
 
 if __name__ == "__main__":
     logging.basicConfig(**DEFINITION.LOG_CONFIG, level=logging.INFO)
@@ -271,6 +310,10 @@ if __name__ == "__main__":
         if mode == "window-replace":
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
             launch.Launch.launch_foot(cmd)
+            return
+
+        if mode == "windows-swap":
+            Front().windows_swap()
             return
 
         logger.error(f"hyprland> unrecognized mode [{mode}], exiting...")
