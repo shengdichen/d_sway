@@ -241,6 +241,10 @@ class Front:
         window_prev.goto()
         geometry.window_to_pos_besteffort(window_prev, pos)
 
+    def test(self) -> None:
+        self._management.load()
+        self._management.status()
+
 
 if __name__ == "__main__":
     logging.basicConfig(**DEFINITION.LOG_CONFIG, level=logging.INFO)
@@ -314,6 +318,10 @@ if __name__ == "__main__":
 
         if mode == "windows-swap":
             Front().windows_swap()
+            return
+
+        if mode == "test":
+            Front().test()
             return
 
         logger.error(f"hyprland> unrecognized mode [{mode}], exiting...")
