@@ -528,6 +528,49 @@ class ManagementHyprland(libwm.Management):
         )
         raise libwm.WorkspaceError  # this should never happen
 
+    def workspace_switch(self, workspace: str) -> None:
+        w = WorkspaceHyprlandNormal.json_current()["name"]
+        is_special = WorkspaceHyprland.name_is_special(workspace)
+
+        if is_special:
+            for (
+                workspace_normal,
+                workspace_special,
+            ) in self._monitor_to_workspaces.values():
+                if workspace_normal != w:
+                    continue
+                if workspace_special == workspace:
+                    logger.info(
+                        f"libhyprland/workspace-switch> showing [{workspace}] already, skipping"
+                    )
+                    return
+            logger.info(f"libhyprland/workspace-switch> [{workspace}]")
+            super().workspace_switch(workspace)
+            return
+
+        if w != workspace:
+            logger.info(f"libhyprland/workspace-switch> normal [{workspace}]")
+            super().workspace_switch(workspace)
+            return
+        for workspace_normal, workspace_special in self._monitor_to_workspaces.values():
+            if workspace_normal != w:
+                continue
+            if not workspace_special:
+                logger.info(
+                    f"libhyprland/workspace-switch> showing normal [{workspace}] "
+                    "already, skipping"
+                )
+                return
+            logger.info(
+                f"libhyprland/workspace-switch> showing normal [{workspace}], "
+                f"but is hidden by [{workspace_special}], hiding [{workspace_special}] now"
+            )
+            if workspace_special == self._hold:
+                self._hold.toggle()
+                return
+            self.workspace_find(workspace_special).toggle()
+            return
+
     def workspace_current_nonspecial(self) -> WorkspaceHyprlandNormal:
         return self.workspace_find(WorkspaceHyprlandNormal.json_current()["id"])
 

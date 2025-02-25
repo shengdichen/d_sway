@@ -17,12 +17,6 @@ class Front:
 
     def workspace_switch(self, workspace: str) -> None:
         self._management.load()
-
-        if self._management.workspace_current() == workspace:
-            logger.info(f"hyprland> already on [{workspace}], skipping")
-            return
-
-        logger.info(f"hyprland> workspace [{workspace}]: switch")
         self._management.workspace_switch(workspace)
 
     def workspace_add_window_current(self, workspace: str) -> None:
