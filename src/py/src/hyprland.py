@@ -247,7 +247,7 @@ class Front:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(**DEFINITION.LOG_CONFIG, level=logging.INFO)
+    logging.basicConfig(**DEFINITION.LOG_CONFIG_HYPRLAND, level=logging.INFO)
 
     if len(sys.argv) == 1:
         raise RuntimeError("hyprland> huh? what mode?")
