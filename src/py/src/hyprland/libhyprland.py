@@ -390,6 +390,10 @@ class MonitorHyprland(libwm.Monitor):
             size_y=js["height"],
         )
 
+    @staticmethod
+    def jsons() -> cabc.Sequence[dict]:
+        return talk.HyprTalk("monitors").execute_to_json()
+
 
 class Geometry:
     def window_to_pos_besteffort(
@@ -425,7 +429,7 @@ class ManagementHyprland(libwm.Management):
         return self._hold
 
     def load_monitors(self) -> None:
-        for j in talk.HyprTalk("monitors").execute_to_json():
+        for j in MonitorHyprland.jsons():
             self._monitors.append(
                 MonitorHyprland(
                     identifier=j["id"],

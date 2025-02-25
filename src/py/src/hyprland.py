@@ -249,6 +249,9 @@ class Front:
 if __name__ == "__main__":
     logging.basicConfig(**DEFINITION.LOG_CONFIG, level=logging.INFO)
 
+    if len(sys.argv) == 1:
+        raise RuntimeError("hyprland> huh? what mode?")
+
     # pylint: disable=too-many-return-statements,too-many-branches
     def main(mode: typing.Optional[str], *args: str) -> None:
         if mode == "workspace-switch":
@@ -259,7 +262,7 @@ if __name__ == "__main__":
             return
 
         if mode == "hold-repeek-cmd":
-            Front().hold_repeek_cmd(*args)
+            Front().hold_repeek_cmd()
             return
         if mode == "hold-peek":
             m = libhp.ManagementHyprland()
@@ -273,7 +276,7 @@ if __name__ == "__main__":
             return
 
         if mode == "hold-add-window-current":
-            Front().hold_add_window_current(*args)
+            Front().hold_add_window_current()
             return
 
         if mode == "hold-split-cmd":
@@ -290,10 +293,10 @@ if __name__ == "__main__":
             return
 
         if mode == "window-previous-switch":
-            Front().window_prev_switch(*args)
+            Front().window_prev_switch()
             return
         if mode == "window-current-close":
-            Front().window_current_close(*args)
+            Front().window_current_close()
             return
         if mode == "window-current-fullscreen-toggle":
             Front().window_current_fullscreen_toggle()
@@ -302,14 +305,14 @@ if __name__ == "__main__":
             Front().window_current_fullscreen_toggle(with_decoration=False)
             return
         if mode == "window-current-opacity-toggle":
-            Front().window_current_opacity_toggle(*args)
+            Front().window_current_opacity_toggle()
             return
         if mode == "window-make-unique":
             Front().window_make_unique()
             return
 
         if mode == "window-replace-cmd":
-            Front().window_replace_cmd(*args)
+            Front().window_replace_cmd()
             return
         if mode == "window-replace":
             cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd"
@@ -325,6 +328,6 @@ if __name__ == "__main__":
             return
 
         logger.error(f"hyprland> unrecognized mode [{mode}], exiting...")
-        raise RuntimeError("what mode?")
+        raise RuntimeError(f"hyprland> unrecognized mode [{mode}]")
 
     main(*sys.argv[1:])
