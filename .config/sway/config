@@ -4,8 +4,8 @@ include {
     ./conf/visual.conf
     ./conf/dev.conf
 
-    ./conf/components/dev/*.conf
-    ./conf/components/adhoc/current.conf
+    ./conf/dev/*.conf
+    ./conf/adhoc/current.conf
 }
 
 include ./util/launch.conf

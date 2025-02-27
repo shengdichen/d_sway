@@ -10,6 +10,7 @@ CURRENT_CONF="current.conf"
 __mkdir() {
     mkdir -p "${DIR_HYPR}"
     mkdir -p "${HOME}/.local/state/hypr"
+    mkdir -p "${DIR_SWAY}"
     mkdir -p "${HOME}/.local/state/sway"
 
     mkdir -p "${HOME}/.config/river"
@@ -18,7 +19,7 @@ __mkdir() {
 
 __adhoc() {
     local _d _conf
-    for _d in "${DIR_HYPR}" "${HOME}/.config/sway/conf/components"; do
+    for _d in "${DIR_HYPR}" "${DIR_SWAY}/conf"; do
         _d="${_d}/adhoc"
         mkdir -p "${_d}"
         _conf="${_d}/${CURRENT_CONF}"

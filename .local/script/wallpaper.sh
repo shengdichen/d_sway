@@ -3,7 +3,7 @@
 SCRIPT_PATH="$(realpath "$(dirname "${0}")")"
 cd "${SCRIPT_PATH}" || exit 3
 
-WALLPAPER_DIR="$(realpath "$(xdg-user-dir PICTURES)/wallpapers")"
+WALLPAPER_DIR="$(realpath "$(xdg-user-dir PICTURES)")/wallpapers"
 LINK_NAME="wallpaper"
 
 . "${HOME}/.local/lib/util.sh"
@@ -17,7 +17,7 @@ __link() {
 
     local _wm="${1}" _wp="${2}"
     (
-        cd "${HOME}/.config/${_wm}/" || exit 3
+        cd "${HOME}/.config/${_wm}" || exit 3
         if [ "${_force}" ] || [ ! -e "./${LINK_NAME}" ]; then
             ln -s -f "${_wp}" "${LINK_NAME}"
         fi
@@ -51,7 +51,7 @@ __use_default() {
     local _wp="${WALLPAPER_DIR}/Leopard_Server.jpg"
 
     local _wm
-    for _wm in "hypr" "sway/conf/components/adhoc" "niri" "river"; do
+    for _wm in "hypr" "sway/conf/adhoc" "niri" "river"; do
         __link "${_wm}" "${_wp}"
     done
 }
