@@ -94,9 +94,13 @@ class Window:
         #
         _class: str,
         title: str,
+        #
+        is_xwayland: bool,
     ):
         self._identifier = identifier
         self._class, self._title = _class, title
+
+        self._is_xwayland = is_xwayland
 
     def __str__(self) -> str:
         return f"window> '{self._class}'.'{self._title}' // {self._identifier}"
@@ -115,12 +119,19 @@ class Window:
     @classmethod
     def from_json(cls, j: dict) -> "Window":
         if j["app_id"]:
-            _class = j["app_id"]
-            title = j["name"]
-        else:  # xwayland
-            _class = j["window_properties"]["class"]
-            title = j["window_properties"]["title"]
-        return cls(j["id"], _class=_class, title=title)
+            return cls(
+                j["id"],
+                _class=j["app_id"],
+                title=j["name"],
+                is_xwayland=False,
+            )
+
+        return cls(
+            j["id"],
+            _class=j["window_properties"]["class"],
+            title=j["window_properties"]["title"],
+            is_xwayland=True,
+        )
 
     @staticmethod
     def traverse(j: dict) -> cabc.Generator[dict, None, None]:
@@ -139,10 +150,13 @@ class Window:
     def format(self) -> str:
         greyer = prettyprint.Prettyprint().color_foreground("grey-bright")
 
-        str_class = f"{self._class.split('.')[-1] if self._class else 'class?'}"
-        if str_class == "firefox-developer-edition":
-            str_class = "firefoxd"
-        str_class = f"{prettyprint.Prettyprint().cyan(str_class)}{greyer.apply('>')}"
+        _class = f"{self._class.split('.')[-1] if self._class else 'class?'}"
+        if _class == "firefox-developer-edition":
+            _class = "firefoxd"
+        str_class = prettyprint.Prettyprint().cyan(_class)
+        if self._is_xwayland:
+            str_class += greyer.apply("/X")
+        str_class += greyer.apply(">")
 
         str_title = self._title or "title?"
 
