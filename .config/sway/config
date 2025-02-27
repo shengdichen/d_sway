@@ -1,13 +1,14 @@
 include {
     ./conf/base.conf
+
     ./conf/layout.conf
     ./conf/visual.conf
-    ./conf/dev.conf
 
+    ./conf/dev.conf
     ./conf/dev/*.conf
+    ./conf/startup.conf
+
     ./conf/adhoc/current.conf
 }
-
-include ./util/launch.conf
 
 # vim: filetype=swayconfig
