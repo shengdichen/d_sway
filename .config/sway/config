@@ -2,8 +2,8 @@ include {
     ./conf/base.conf
     ./conf/layout.conf
     ./conf/visual.conf
+    ./conf/dev.conf
 
-    ./conf/components/*.conf
     ./conf/components/dev/*.conf
     ./conf/components/adhoc/current.conf
 }
