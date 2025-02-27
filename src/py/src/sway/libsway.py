@@ -12,6 +12,21 @@ talk = talksway.TalkSway()
 
 
 class Execute:
+    def __init__(self):
+        self._cmds = []
+
+    def add(self, cmd: str) -> "Execute":
+        self._cmds.append(cmd)
+        return self
+
+    def assemble(self) -> str:
+        return "; ".join(
+            [c for c in self._cmds if c]  # keep only non-empty commands
+        )
+
+    def execute(self) -> None:
+        talk.execute(self.assemble())
+
     @staticmethod
     def cmd_window_goto(window: int) -> str:
         return f"[con_id={window}] focus"
@@ -48,12 +63,6 @@ class Execute:
 
         logger.info(f"window/opacity-toggle> resetting (to {MAX})")
         return f"opacity set {MAX}"
-
-    @staticmethod
-    def assemble(cmds: cabc.Iterable[str]) -> str:
-        return "; ".join(
-            [c for c in cmds if c]  # keep only non-empty commands
-        )
 
 
 class Util:
@@ -244,12 +253,12 @@ class HoldSway(Workspace):
 
     def split(self, window: Window) -> str:
         logger.info(f"hold> split [{window}]")
-        cmds = [
-            window.cmd_goto(),
-            Execute.cmd_window_move_workspace_prev(),
-            window.cmd_goto(),
-        ]
-        return Execute.assemble(cmds)
+
+        e = Execute()
+        e.add(window.cmd_goto())
+        e.add(Execute.cmd_window_move_workspace_prev())
+        e.add(window.cmd_goto())
+        return e.assemble()
 
 
 class Management:
@@ -359,22 +368,22 @@ class Management:
         raise WindowError
 
     def hold_add_current(self) -> None:
-        cmds = []
+        e = Execute()
 
-        cmds.append(
+        e.add(
             self._hold.windows()[-1].cmd_goto()  # make sure new window is added last
         )
         monitor = self.current()[0]
         if self.monitor_of(self._hold) != monitor:
-            cmds.append(monitor.cmd_add_current())  # already on hold-workspace
-        cmds.append(Execute.cmd_workspace_goto_prev())
+            e.add(monitor.cmd_add_current())  # already on hold-workspace
+        e.add(Execute.cmd_workspace_goto_prev())
 
-        cmds.append(self._hold.cmd_add_current())
+        e.add(self._hold.cmd_add_current())
 
-        talk.execute(Execute.assemble(cmds))
+        e.execute()
 
     def hold_unique(self) -> None:
-        cmds = []
+        e = Execute()
 
         if not (window := self.current()[2]):
             logger.warning("sway/hold-unique> no current window, skipping")
@@ -389,68 +398,68 @@ class Management:
             return
 
         # make sure new window is added last
-        cmds.append(self._hold.windows()[-1].cmd_goto())
+        e.add(self._hold.windows()[-1].cmd_goto())
         monitor = self.current()[0]
         if self.monitor_of(self._hold) != monitor:
-            cmds.append(monitor.cmd_add_current())
-        cmds.append(Execute.cmd_workspace_goto_prev())
+            e.add(monitor.cmd_add_current())
+        e.add(Execute.cmd_workspace_goto_prev())
 
         logger.info(f"sway/hold-unique> keeping [{window}]")
         for w in windows:
             if w == window:
                 continue
             logger.info(f"sway/hold-unique> discarding [{w}]")
-            cmds.append(w.cmd_goto())
-            cmds.append(self._hold.cmd_add_current())
+            e.add(w.cmd_goto())
+            e.add(self._hold.cmd_add_current())
 
-        talk.execute(Execute.assemble(cmds))
+        e.execute()
 
     def hold_split(self) -> None:
-        cmds = []
+        e = Execute()
 
         monitor = self.current()[0]
         if self.monitor_of(self._hold) != monitor:
-            cmds.append(self._hold.cmd_goto())
-            cmds.append(monitor.cmd_add_current())
+            e.add(self._hold.cmd_goto())
+            e.add(monitor.cmd_add_current())
 
         windows = list(reversed(self._hold.windows()))  # newest first
         for s in self._fzf.choose_multi((w.format() for w in windows)):
             window = windows[windows.index(Window.deformat(s))]
-            cmds.append(self._hold.split(window))
+            e.add(self._hold.split(window))
 
-        talk.execute(Execute.assemble(cmds))
+        e.execute()
 
     def hold_swap(self, window_id: typing.Optional[int] = None) -> None:
-        cmds = []
+        e = Execute()
 
         monitor = self.current()[0]
         if self.monitor_of(self._hold) != monitor:
-            cmds.append(self._hold.cmd_goto())
-            cmds.append(monitor.cmd_add_current())  # already on hold-workspace
-            cmds.append(Execute.cmd_workspace_goto_prev())
+            e.add(self._hold.cmd_goto())
+            e.add(monitor.cmd_add_current())  # already on hold-workspace
+            e.add(Execute.cmd_workspace_goto_prev())
 
         if window_id:
             window = self.window_find(window_id)
-            cmds.append(window.cmd_goto())
+            e.add(window.cmd_goto())
 
         windows = list(reversed(self._hold.windows()))  # newest first
         i = windows.index(
             Window.deformat(self._fzf.choose_one((w.format() for w in windows)))
         )
         window_new = windows[i]
-        cmds.append(window_new.cmd_swap())
+        e.add(window_new.cmd_swap())
 
         # make swapped window last in hold
-        cmds.append(self._hold.cmd_goto())
+        e.add(self._hold.cmd_goto())
         for __ in range(i):
-            cmds.append("move right")
-        cmds.append(Execute.cmd_workspace_goto_prev())
+            e.add("move right")
+        e.add(Execute.cmd_workspace_goto_prev())
 
         logger.info(
             f"swap> [{window if window_id else 'current'}] <-> "
             f"{i}/{len(self._hold.windows())}.[{window_new}]"
         )
-        talk.execute(Execute.assemble(cmds))
+        e.execute()
 
     def footclient(self, cmd: str = "") -> Window:
         return self.launch_float(f"footclient {cmd}")
@@ -497,4 +506,4 @@ class Management:
             logger.warning("sway/opacity-toggle> no current window, skipping")
             return
 
-        talk.execute(Execute.cmd_opacity_toggle(val))
+        Execute().add(Execute.cmd_opacity_toggle(val)).execute()
