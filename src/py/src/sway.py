@@ -43,6 +43,12 @@ if __name__ == "__main__":
             Front().hold_add_current()
             return
 
+        if mode == "hold-unique":
+            m = libsway.Management()
+            m.load()
+            m.hold_unique()
+            return
+
         if mode == "hold-split-cmd":
             Front().hold_split_cmd()
             return

@@ -352,6 +352,38 @@ class Management:
 
         talk.execute(Execute.assemble(cmds))
 
+    def hold_unique(self) -> None:
+        cmds = []
+
+        if not (window := self.current()[2]):
+            logger.warning("sway/hold-unique> no current window, skipping")
+            return
+
+        workspace = self.current()[1]
+        windows = workspace.windows()
+        if len(windows) == 1:
+            logger.warning(
+                f"sway/hold-unique> only [{window}] on [{workspace}], skipping"
+            )
+            return
+
+        # make sure new window is added last
+        cmds.append(self._hold.windows()[-1].cmd_goto())
+        monitor = self.current()[0]
+        if self.monitor_of(self._hold) != monitor:
+            cmds.append(monitor.cmd_add_current())
+        cmds.append(Execute.cmd_workspace_goto_prev())
+
+        logger.info(f"sway/hold-unique> keeping [{window}]")
+        for w in windows:
+            if w == window:
+                continue
+            logger.info(f"sway/hold-unique> discarding [{w}]")
+            cmds.append(w.cmd_goto())
+            cmds.append(self._hold.cmd_add_current())
+
+        talk.execute(Execute.assemble(cmds))
+
     def hold_split(self) -> None:
         cmds = []
 
