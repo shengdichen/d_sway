@@ -1,8 +1,7 @@
 include {
     ./conf/base.conf
     ./conf/layout.conf
-
-    ./conf/container/*.conf
+    ./conf/visual.conf
 
     ./conf/components/*.conf
     ./conf/components/dev/*.conf
