@@ -68,10 +68,21 @@ class Execute:
 class Util:
     @staticmethod
     def traverse(node: dict) -> cabc.Generator[dict, None, None]:
-        if "app_id" in node:
+        if Util.is_leaf(node):
             yield node
         for n in node["nodes"]:
             yield from Util.traverse(n)
+
+    @staticmethod
+    def traverse_to_container(node: dict) -> cabc.Generator[dict, None, None]:
+        if node["nodes"] and Util.is_leaf(node["nodes"][0]):
+            yield node
+        for n in node["nodes"]:
+            yield from Util.traverse_to_container(n)
+
+    @staticmethod
+    def is_leaf(node: dict) -> bool:
+        return "app_id" in node
 
 
 class Window:
@@ -370,19 +381,12 @@ class Management:
     def hold_add_current(self) -> None:
         e = Execute()
 
-        e.add(
-            self._hold.windows()[-1].cmd_goto()  # make sure new window is added last
-        )
-        monitor = self.current()[0]
-        if self.monitor_of(self._hold) != monitor:
-            e.add(monitor.cmd_add_current())  # already on hold-workspace
-        e.add(Execute.cmd_workspace_goto_prev())
-
+        e.add(self._hold_to_current_monitor())
         e.add(self._hold.cmd_add_current())
 
         e.execute()
 
-    def hold_unique(self) -> None:
+    def hold_unique(self, at_container_level: bool = True) -> None:
         e = Execute()
 
         if not (window := self.current()[2]):
@@ -397,22 +401,52 @@ class Management:
             )
             return
 
-        # make sure new window is added last
-        e.add(self._hold.windows()[-1].cmd_goto())
+        e.add(self._hold_to_current_monitor())
+
+        if at_container_level:
+            for container in Util.traverse_to_container(talk.nodes()):
+                windows_c = [Window.from_json(j) for j in container["nodes"]]
+                if window not in windows_c:
+                    continue
+
+                n_windows = len(windows_c)
+                if n_windows == 1:
+                    logger.info(
+                        f"sway/hold-unique> current [{window}] alone in container "
+                        f"[{container['id']}/{container['layout']}]; "
+                        f"working on [{workspace}] now"
+                    )
+                    break
+
+                logger.info(
+                    f"sway/hold-unique> working on container "
+                    f"[{container['id']}/{container['layout']}] with {n_windows} windows]"
+                )
+                windows = windows_c
+                break
+
+        for w in windows:
+            if w == window:
+                continue
+            logger.debug(f"sway/hold-unique> discarding [{w}]")
+            e.add(w.cmd_goto())
+            e.add(self._hold.cmd_add_current())
+
+        e.execute()
+
+    def _hold_to_current_monitor(self, visit_last_window: bool = True) -> str:
+        e = Execute()
+
+        if visit_last_window:
+            # make sure new window is added last
+            e.add(self._hold.windows()[-1].cmd_goto())
+
         monitor = self.current()[0]
         if self.monitor_of(self._hold) != monitor:
             e.add(monitor.cmd_add_current())
         e.add(Execute.cmd_workspace_goto_prev())
 
-        logger.info(f"sway/hold-unique> keeping [{window}]")
-        for w in windows:
-            if w == window:
-                continue
-            logger.info(f"sway/hold-unique> discarding [{w}]")
-            e.add(w.cmd_goto())
-            e.add(self._hold.cmd_add_current())
-
-        e.execute()
+        return e.assemble()
 
     def hold_split(self) -> None:
         e = Execute()

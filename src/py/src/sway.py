@@ -48,6 +48,11 @@ if __name__ == "__main__":
             m.load()
             m.hold_unique()
             return
+        if mode == "hold-unique-workspace":
+            m = libsway.Management()
+            m.load()
+            m.hold_unique(at_container_level=False)
+            return
 
         if mode == "hold-split-cmd":
             Front().hold_split_cmd()
