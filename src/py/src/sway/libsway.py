@@ -29,6 +29,27 @@ class Execute:
         return "move container workspace back_and_forth"
 
     @staticmethod
+    def cmd_opacity_toggle(val: float) -> str:
+        # REF:
+        #   https://github.com/swaywm/sway/issues/7173#issuecomment-1551364058
+
+        MAX = 1.0
+
+        # find increment that would trigger an overshoot
+        incr = 0.05
+        while incr + val <= MAX:
+            incr *= 2
+
+        logger.debug(f"window/opacity-toggle> probing with increment [{incr}]")
+        ret = talk.execute("opacity plus 0.01")
+        if "error" in ret[0]:  # overshot
+            logger.info(f"window/opacity-toggle> {val}")
+            return f"opacity set {val}"
+
+        logger.info(f"window/opacity-toggle> resetting (to {MAX})")
+        return f"opacity set {MAX}"
+
+    @staticmethod
     def assemble(cmds: cabc.Iterable[str]) -> str:
         return "; ".join(
             [c for c in cmds if c]  # keep only non-empty commands
@@ -470,3 +491,10 @@ class Management:
             if j["focused"]:
                 return Window.from_json(j)
         raise WindowError
+
+    def opacity_toggle(self, val: float = 0.90625) -> None:
+        if not self.current()[2]:
+            logger.warning("sway/opacity-toggle> no current window, skipping")
+            return
+
+        talk.execute(Execute.cmd_opacity_toggle(val))

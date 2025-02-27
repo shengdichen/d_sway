@@ -80,6 +80,12 @@ if __name__ == "__main__":
             m.footclient(cmd)
             return
 
+        if mode == "opacity-toggle":
+            m = libsway.Management()
+            m.load()
+            m.opacity_toggle(float(args[0]))
+            return
+
         if mode == "test":
             Front().test()
             return
