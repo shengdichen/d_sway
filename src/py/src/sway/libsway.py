@@ -400,7 +400,19 @@ class Management:
 
         e.execute()
 
-    def hold_unique(self, at_container_level: bool = True) -> None:
+    def hold_unique_container(self) -> None:
+        # unique in container
+        self._hold_unique(mode=0)
+
+    def hold_unique_container_workspace(self) -> None:
+        # first unique in container, then unique in workspace
+        self._hold_unique(mode=1)
+
+    def hold_unique_workspace(self) -> None:
+        # unique in workspace
+        self._hold_unique(mode=2)
+
+    def _hold_unique(self, mode: int = 0) -> None:
         e = Execute()
 
         if not (window := self.current()[2]):
@@ -417,7 +429,7 @@ class Management:
 
         e.add(self._hold_to_current_monitor())
 
-        if at_container_level:
+        if mode <= 1:
             for container in Util.traverse_to_container(talk.nodes()):
                 windows_c = [Window.from_json(j) for j in container["nodes"]]
                 if window not in windows_c:
@@ -425,6 +437,12 @@ class Management:
 
                 n_windows = len(windows_c)
                 if n_windows == 1:
+                    if mode == 0:
+                        logger.warning(
+                            f"sway/hold-unique> only [{window}] in container "
+                            f"[{container['id']}/{container['layout']}], skipping"
+                        )
+                        return
                     logger.info(
                         f"sway/hold-unique> current [{window}] alone in container "
                         f"[{container['id']}/{container['layout']}]; "

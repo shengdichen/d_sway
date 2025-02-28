@@ -43,15 +43,15 @@ if __name__ == "__main__":
             Front().hold_add_current()
             return
 
-        if mode == "hold-unique":
+        if mode == "hold-unique-container":
             m = libsway.Management()
             m.load()
-            m.hold_unique()
+            m.hold_unique_container()
             return
         if mode == "hold-unique-workspace":
             m = libsway.Management()
             m.load()
-            m.hold_unique(at_container_level=False)
+            m.hold_unique_workspace()
             return
 
         if mode == "hold-split-cmd":
