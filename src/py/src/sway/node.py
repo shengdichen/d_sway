@@ -3,7 +3,7 @@ import logging
 import re
 import typing
 
-from common import prettyprint
+from common import prettyprint, windowformat
 from sway import command
 from sway.talk import talk
 
@@ -105,19 +105,16 @@ class Window(Container):
     def format(self) -> str:
         greyer = prettyprint.Prettyprint().color_foreground("grey-bright")
 
-        _class = f"{self._class.split('.')[-1] if self._class else 'class?'}"
-        if _class == "firefox-developer-edition":
-            _class = "firefoxd"
-        str_class = prettyprint.Prettyprint().cyan(_class)
+        s_class, s_title = windowformat.WindowFormat(self._class, self._title).format()
+
+        s_class = prettyprint.Prettyprint().cyan(s_class)
         if self._is_xwayland:
-            str_class += greyer.apply("/X")
-        str_class += greyer.apply(">")
+            s_class += greyer.apply("/X")
+        s_class += greyer.apply(">")
 
-        str_title = self._title or "title?"
+        s_addr = f"{greyer.apply(f'// {self._identifier}')}"
 
-        str_addr = f"{greyer.apply(f'// {self._identifier}')}"
-
-        return f"{str_class} {str_title}  {str_addr}"
+        return f"{s_class} {s_title}  {s_addr}"
 
     @staticmethod
     def deformat(s: str) -> int:
