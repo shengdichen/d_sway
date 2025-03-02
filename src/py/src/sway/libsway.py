@@ -1,14 +1,13 @@
 import collections.abc as cabc
 import logging
-import re
 import time
 import typing
 
-from common import fzf, prettyprint
-from sway import talk as talksway
+from common import fzf
+from sway import node as nodesway
+from sway.talk import talk
 
 logger = logging.getLogger(__name__)
-talk = talksway.TalkSway()
 
 
 class Execute:
@@ -85,198 +84,17 @@ class Util:
         return "app_id" in node
 
 
-class Window:
-    PATTERN_SELECTION_PROMPT = re.compile(r"^.* (\d*)$")
+class HoldSway(nodesway.Workspace):
+    NAME = "HOLD"
 
     def __init__(
         self,
-        identifier: int,
         #
-        _class: str,
-        title: str,
-        #
-        is_xwayland: bool,
+        identifier: int = -1,
     ):
-        self._identifier = identifier
-        self._class, self._title = _class, title
+        super().__init__(name=HoldSway.NAME, identifier=identifier)
 
-        self._is_xwayland = is_xwayland
-
-    def __str__(self) -> str:
-        return f"window> '{self._class}'.'{self._title}' // {self._identifier}"
-
-    def __eq__(self, that: typing.Any) -> bool:
-        if isinstance(that, int):
-            return self._identifier == that
-        if isinstance(that, Window):
-            return self._identifier == that._identifier
-        return False
-
-    @property
-    def identifier(self) -> int:
-        return self._identifier
-
-    @classmethod
-    def from_json(cls, j: dict) -> "Window":
-        if j["app_id"]:
-            return cls(
-                j["id"],
-                _class=j["app_id"],
-                title=j["name"],
-                is_xwayland=False,
-            )
-
-        return cls(
-            j["id"],
-            _class=j["window_properties"]["class"],
-            title=j["window_properties"]["title"],
-            is_xwayland=True,
-        )
-
-    @staticmethod
-    def traverse(j: dict) -> cabc.Generator[dict, None, None]:
-        if "app_id" in j:
-            yield j
-        for _j in j["nodes"]:
-            yield from Window.traverse(_j)
-
-    @classmethod
-    def from_node(cls, j: dict) -> cabc.Generator["Window", None, None]:
-        if "app_id" in j:
-            yield cls.from_json(j)
-        for _j in j["nodes"]:
-            yield from cls.from_node(_j)
-
-    def format(self) -> str:
-        greyer = prettyprint.Prettyprint().color_foreground("grey-bright")
-
-        _class = f"{self._class.split('.')[-1] if self._class else 'class?'}"
-        if _class == "firefox-developer-edition":
-            _class = "firefoxd"
-        str_class = prettyprint.Prettyprint().cyan(_class)
-        if self._is_xwayland:
-            str_class += greyer.apply("/X")
-        str_class += greyer.apply(">")
-
-        str_title = self._title or "title?"
-
-        str_addr = f"{greyer.apply(f'// {self._identifier}')}"
-
-        return f"{str_class} {str_title}  {str_addr}"
-
-    @staticmethod
-    def deformat(s: str) -> int:
-        m = Window.PATTERN_SELECTION_PROMPT.match(s)
-        if not m:
-            raise RuntimeError(f"window> invalid choice {s}")
-        return int(m.group(1))
-
-    @staticmethod
-    def footclient(cmd: str = "") -> None:
-        talk.execute(f"exec footclient {cmd}")
-
-    def goto(self) -> None:
-        talk.execute(self.cmd_goto())
-
-    def cmd_goto(self) -> str:
-        return Execute.cmd_window_goto(self._identifier)
-
-    def swap(self) -> None:
-        talk.execute(self.cmd_swap())
-
-    def cmd_swap(self) -> str:
-        return f"swap container with con_id {self._identifier}"
-
-
-class WindowError(ValueError):
-    pass
-
-
-class Workspace:
-    def __init__(self, name: str):
-        self._name = name
-        self._windows: list[Window] = []
-
-    def __str__(self) -> str:
-        return f"workspace> '{self._name}', #windows: {len(self._windows)}"
-
-    def __eq__(self, that: typing.Any) -> bool:
-        if isinstance(that, str):
-            return self._name == that
-        if isinstance(that, Workspace):
-            return self._name == that._name
-        return False
-
-    @classmethod
-    def from_json(cls, j: dict) -> "Workspace":
-        return cls(j["name"])
-
-    def windows(self) -> list[Window]:
-        return self._windows
-
-    def has(self, window: typing.Any) -> bool:
-        return window in self._windows
-
-    def goto(self) -> None:
-        talk.execute(self.cmd_goto())
-
-    def cmd_goto(self) -> str:
-        return Execute.cmd_workspace_goto(self._name)
-
-    def add_current(self) -> str:
-        return talk.execute(self.cmd_add_current())
-
-    def cmd_add_current(self) -> str:
-        return f"move container workspace {self._name}"
-
-
-class WorkspaceError(ValueError):
-    pass
-
-
-class Monitor:
-    def __init__(self, name: str) -> None:
-        self._name = name
-        self._workspaces: list[Workspace] = []
-
-    def __str__(self) -> str:
-        return f"monitor> '{self._name}', #workspaces: {len(self._workspaces)}"
-
-    def __eq__(self, that: typing.Any) -> bool:
-        if isinstance(that, str):
-            return self._name == that
-        if isinstance(that, Monitor):
-            return self._name == that._name
-        return False
-
-    @classmethod
-    def from_json(cls, j: dict) -> "Monitor":
-        return cls(j["name"])
-
-    def workspaces(self) -> list[Workspace]:
-        return self._workspaces
-
-    def has(self, workspace: typing.Any) -> bool:
-        return workspace in self._workspaces
-
-    def add_current(self) -> str:
-        return talk.execute(self.cmd_add_current())
-
-    def cmd_add_current(self) -> str:
-        return f"move workspace output {self._name}"
-
-
-class MonitorError(ValueError):
-    pass
-
-
-class HoldSway(Workspace):
-    NAME = "HOLD"
-
-    def __init__(self):
-        super().__init__(name=HoldSway.NAME)
-
-    def split(self, window: Window) -> str:
+    def split(self, window: nodesway.Window) -> str:
         logger.info(f"hold> split [{window}]")
 
         e = Execute()
@@ -285,112 +103,151 @@ class HoldSway(Workspace):
         e.add(window.cmd_goto())
         return e.assemble()
 
+    @classmethod
+    def from_json(cls, j: dict) -> "HoldSway":
+        workspace: HoldSway = cls(identifier=j["id"])
+
+        group = nodesway.Group(
+            layout=j["layout"],
+            identifier=f"w{j['id']}",
+        )
+        workspace.toplevel = group  # pylint: disable=attribute-defined-outside-init
+
+        return workspace
+
 
 class Management:
     def __init__(self):
-        self._monitors = []
-        self._workspaces = []
-        self._hold = HoldSway()
+        self._raw = talk.nodes()
+        self._root = nodesway.Root.from_json(self._raw)
 
-        self._current: tuple[Monitor, Workspace, typing.Optional[Window]] = ()
+        self._hold: HoldSway  # type: ignore [annotation-unchecked]
+
+        self._current_monitor: nodesway.Monitor  # type: ignore [annotation-unchecked]
+        self._current_workspace: nodesway.Workspace  # type: ignore [annotation-unchecked]
+        self._current_window: typing.Optional[nodesway.Window]  # type: ignore
 
         self._fzf = fzf.Fzf(fzf_tiebreak="index")
 
-    def load(self) -> None:
-        for j in talk.nodes()["nodes"]:
-            monitor = Monitor.from_json(j)
-            logger.debug(f"management/load> [{monitor}]")
-            self._monitors.append(monitor)
+    def load_tree(self) -> None:
+        for j in self._raw["nodes"]:
+            monitor = nodesway.Monitor.from_json(j)
+            logger.debug(f"tree/build> [{self._root}] += [{monitor}]")
+            self._root.monitors.append(monitor)
+
+            logger.debug(f"tree/build> start: [{monitor}]")
 
             for j in j["nodes"]:
-                workspace = Workspace.from_json(j)
-                logger.debug(f"management/load> [{workspace}]")
-                monitor.workspaces().append(workspace)
+                if j["name"] == HoldSway.NAME:
+                    workspace = HoldSway.from_json(j)
+                    self._hold = workspace
+                else:
+                    workspace = nodesway.Workspace.from_json(j)
 
-                if workspace != self._hold:
-                    self._workspaces.append(workspace)
+                logger.debug(f"tree/build> [{monitor}] += [{workspace}]")
+                monitor.workspaces.append(workspace)
 
-                for j in Window.traverse(j):
-                    window = Window.from_json(j)
-                    logger.debug(f"management/load> [{window}]")
+                logger.debug(f"tree/build> start: [{workspace}]")
+                workspace.build_to_window(j)
+                logger.debug(f"tree/build> end: [{workspace}]")
 
-                    if j["focused"]:
-                        self._current = (monitor, workspace, window)
+            logger.debug(f"tree/build> end: [{monitor}]")
 
-                    if workspace != self._hold:
-                        workspace.windows().append(window)
+    def load_current(self) -> None:
+        for monitor in self._root.monitors:
+            for workspace in monitor.workspaces:
+                for window in workspace.toplevel.iterate_to_window():
+                    if not window.is_current:
                         continue
-                    self._hold.windows().append(window)
-
-    def current(self) -> tuple[Monitor, Workspace, typing.Optional[Window]]:
-        if not self._current:
-            logger.info(
-                "management/current> no window focused, querying monitor & workspace..."
-            )
-            for j in talk.workspaces():
-                if j["focused"]:
-                    self._current = (
-                        self.monitor_find(j["output"]),
-                        self.workspace_find(j["name"]),
-                        None,
+                    (
+                        self._current_monitor,
+                        self._current_workspace,
+                        self._current_window,
+                    ) = monitor, workspace, window
+                    logger.info(
+                        "management/current> "
+                        f"[{self._current_monitor}]->"
+                        f"[{self._current_workspace}]->"
+                        f"[{self._current_window}]"
                     )
-                    break
-            else:
-                logger.error(
-                    "sway> not only no window focused, but no workspace either"
-                )
-                raise RuntimeError  # this should never happen
+                    return
 
-        logger.debug(
-            "management/current> "
-            f"[{self._current[0]}], [{self._current[1]}], [{self._current[2]}]"
-        )
-        return self._current
+        for j in talk.workspaces():
+            if not j["focused"]:
+                continue
+            self._current_monitor = self.monitor_find(j["output"])
+            self._current_workspace = self.workspace_find(j["name"])
+            logger.info(
+                "management/current> "
+                f"[{self._current_monitor}]->"
+                f"[{self._current_workspace}], "
+                "no current window"
+            )
+            return
+
+        logger.error("sway> not only no window focused, but no workspace either")
+        raise RuntimeError  # this should never happen
+
+    def load(self) -> None:
+        self.load_tree()
+        self.load_current()
 
     def report(self) -> None:
         print(
             "management/current> "
-            f"[{self._current[0]}], [{self._current[1]}], [{self._current[2]}]"
+            f"[{self._current_monitor}]->"
+            f"[{self._current_workspace}]->"
+            f"[{self._current_window}]"
         )
         print()
+        print()
 
-        print("management/report> windows, nonhold")
-        for workspace in self._workspaces:
-            for window in workspace.windows():
-                print(window)
+        self.report_tree()
         print()
 
         print("management/report> windows, hold")
-        for window in self._hold.windows():
+        for window in self._hold.windows:
             print(window)
 
-    def monitor_find(self, query: typing.Any) -> Monitor:
-        for monitor in self._monitors:
+    def report_tree(self) -> None:
+        for monitor in self._root.monitors:
+            print(monitor)
+            for workspace in monitor.workspaces:
+                print(workspace)
+                for node in workspace.toplevel.iterate():
+                    print(node)
+                print()
+
+    def monitor_find(self, query: typing.Any) -> nodesway.Monitor:
+        for monitor in self._root.monitors:
             if monitor == query:
                 return monitor
-        raise MonitorError
+        raise nodesway.MonitorError
 
-    def monitor_of(self, workspace: Workspace) -> Monitor:
-        for monitor in self._monitors:
-            if monitor.has(workspace):
+    def monitor_of(self, workspace: nodesway.Workspace) -> nodesway.Monitor:
+        for monitor in self._root.monitors:
+            if workspace in monitor.workspaces:
+                logger.info(f"found monitor [{monitor}]")
                 return monitor
-        raise MonitorError
+        raise nodesway.MonitorError
 
-    def workspace_find(self, query: typing.Any) -> Workspace:
-        for workspace in self._workspaces:
-            if workspace == query:
-                return workspace
-        raise WorkspaceError
+    def workspace_find(self, query: typing.Any) -> nodesway.Workspace:
+        for monitor in self._root.monitors:
+            for workspace in monitor.workspaces:
+                if workspace == query:
+                    return workspace
+        raise nodesway.WorkspaceError
 
-    def window_find(self, query: typing.Any) -> Window:
-        for workspace in self._workspaces:
-            for window in workspace.windows():
-                if window == query:
-                    return window
-        for window in self._hold.windows():
+    def window_find(self, query: typing.Any) -> nodesway.Window:
+        for monitor in self._root.monitors:
+            for workspace in monitor.workspaces:
+                for window in workspace.windows:
+                    if window == query:
+                        return window
+        for window in self._hold.windows:
             if window == query:
                 return window
-        raise WindowError
+        raise nodesway.WindowError
 
     def hold_add_current(self) -> None:
         e = Execute()
@@ -415,12 +272,12 @@ class Management:
     def _hold_unique(self, mode: int = 0) -> None:
         e = Execute()
 
-        if not (window := self.current()[2]):
+        if not (window := self._current_window):
             logger.warning("sway/hold-unique> no current window, skipping")
             return
 
-        workspace = self.current()[1]
-        windows = workspace.windows()
+        workspace = self._current_workspace
+        windows = workspace.windows
         if len(windows) == 1:
             logger.warning(
                 f"sway/hold-unique> only [{window}] on [{workspace}], skipping"
@@ -431,7 +288,7 @@ class Management:
 
         if mode <= 1:
             for container in Util.traverse_to_container(talk.nodes()):
-                windows_c = [Window.from_json(j) for j in container["nodes"]]
+                windows_c = [nodesway.Window.from_json(j) for j in container["nodes"]]
                 if window not in windows_c:
                     continue
 
@@ -471,11 +328,10 @@ class Management:
 
         if visit_last_window:
             # make sure new window is added last
-            e.add(self._hold.windows()[-1].cmd_goto())
+            e.add(self._hold.windows[-1].cmd_goto())
 
-        monitor = self.current()[0]
-        if self.monitor_of(self._hold) != monitor:
-            e.add(monitor.cmd_add_current())
+        if self.monitor_of(self._hold) != self._current_monitor:
+            e.add(self._current_monitor.cmd_add_current())
         e.add(Execute.cmd_workspace_goto_prev())
 
         return e.assemble()
@@ -483,14 +339,14 @@ class Management:
     def hold_split(self) -> None:
         e = Execute()
 
-        monitor = self.current()[0]
-        if self.monitor_of(self._hold) != monitor:
+        if self.monitor_of(self._hold) != self._current_monitor:
             e.add(self._hold.cmd_goto())
-            e.add(monitor.cmd_add_current())
+            e.add(self._current_monitor.cmd_add_current())
 
-        windows = list(reversed(self._hold.windows()))  # newest first
+        windows = list(reversed(self._hold.windows))  # newest first
         for s in self._fzf.choose_multi((w.format() for w in windows)):
-            window = windows[windows.index(Window.deformat(s))]
+            window = windows[windows.index(nodesway.Window.deformat(s))]
+            logger.info(f"miao {self._hold.split(window)}")
             e.add(self._hold.split(window))
 
         e.execute()
@@ -498,7 +354,7 @@ class Management:
     def hold_swap(self, window_id: typing.Optional[int] = None) -> None:
         e = Execute()
 
-        monitor = self.current()[0]
+        monitor = self._current_monitor
         if self.monitor_of(self._hold) != monitor:
             e.add(self._hold.cmd_goto())
             e.add(monitor.cmd_add_current())  # already on hold-workspace
@@ -508,9 +364,11 @@ class Management:
             window = self.window_find(window_id)
             e.add(window.cmd_goto())
 
-        windows = list(reversed(self._hold.windows()))  # newest first
+        windows = list(reversed(self._hold.windows))  # newest first
         i = windows.index(
-            Window.deformat(self._fzf.choose_one((w.format() for w in windows)))
+            nodesway.Window.deformat(
+                self._fzf.choose_one((w.format() for w in windows))
+            )
         )
         window_new = windows[i]
         e.add(window_new.cmd_swap())
@@ -523,17 +381,18 @@ class Management:
 
         logger.info(
             f"swap> [{window if window_id else 'current'}] <-> "
-            f"{i}/{len(self._hold.windows())}.[{window_new}]"
+            f"{i}/{len(self._hold.windows)}.[{window_new}]"
         )
         e.execute()
 
-    def footclient(self, cmd: str = "") -> Window:
+    def footclient(self, cmd: str = "") -> nodesway.Window:
         return self.launch_float(f"footclient {cmd}")
 
     def launch_float(
         self, cmd: str, n_checks: int = 30, check_cadence: float = 0.03
-    ) -> Window:
-        window = self.current()[2]
+    ) -> nodesway.Window:
+        window = self._current_window
+        logger.info(f"old {window}")
         talk.execute(f"exec {cmd}")
 
         if window:
@@ -547,28 +406,28 @@ class Management:
                 )
                 talk.execute("floating enable")
                 return window_new
-            raise WindowError
+            raise nodesway.WindowError
 
         # no currently focused window
         for __ in range(n_checks):
             for j in Util.traverse(talk.nodes()):
                 if not j["focused"]:
                     continue
-                window_new = Window.from_json(j)
+                window_new = nodesway.Window.from_json(j)
                 logger.info(f"sway/launch> '{cmd}': [{window_new}]")
                 talk.execute("floating enable")
                 return window_new
             time.sleep(check_cadence)
-        raise WindowError
+        raise nodesway.WindowError
 
-    def _window_current(self) -> Window:
+    def _window_current(self) -> nodesway.Window:
         for j in Util.traverse(talk.nodes()):
             if j["focused"]:
-                return Window.from_json(j)
-        raise WindowError
+                return nodesway.Window.from_json(j)
+        raise nodesway.WindowError
 
     def opacity_toggle(self, val: float = 0.90625) -> None:
-        if not self.current()[2]:
+        if not self._current_window:
             logger.warning("sway/opacity-toggle> no current window, skipping")
             return
 
