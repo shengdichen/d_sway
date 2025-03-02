@@ -75,11 +75,11 @@ class Window(Container):
 
     @classmethod
     def from_json(cls, j: dict) -> "Window":
-        if j["app_id"]:
+        if "window_properties" in j:
             return cls(
-                _class=j["app_id"],
-                title=j["name"],
-                is_xwayland=False,
+                _class=j["window_properties"]["class"] or "",
+                title=j["window_properties"]["title"] or "",
+                is_xwayland=True,
                 #
                 is_current=j["focused"],
                 #
@@ -87,9 +87,9 @@ class Window(Container):
             )
 
         return cls(
-            _class=j["window_properties"]["class"],
-            title=j["window_properties"]["title"],
-            is_xwayland=True,
+            _class=j["app_id"] or "",
+            title=j["name"] or "",
+            is_xwayland=False,
             #
             is_current=j["focused"],
             #
