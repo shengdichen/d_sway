@@ -69,6 +69,10 @@ class Window(Container):
     def is_current(self) -> bool:
         return self._is_current
 
+    @property
+    def identifier(self) -> int:
+        return self._identifier
+
     @classmethod
     def from_json(cls, j: dict) -> "Window":
         if j["app_id"]:

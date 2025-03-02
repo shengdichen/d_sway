@@ -4,64 +4,11 @@ import time
 import typing
 
 from common import fzf
+from sway import command
 from sway import node as nodesway
 from sway.talk import talk
 
 logger = logging.getLogger(__name__)
-
-
-class Execute:
-    def __init__(self):
-        self._cmds = []
-
-    def add(self, cmd: str) -> "Execute":
-        self._cmds.append(cmd)
-        return self
-
-    def assemble(self) -> str:
-        return "; ".join(
-            [c for c in self._cmds if c]  # keep only non-empty commands
-        )
-
-    def execute(self) -> None:
-        talk.execute(self.assemble())
-
-    @staticmethod
-    def cmd_window_goto(window: int) -> str:
-        return f"[con_id={window}] focus"
-
-    @staticmethod
-    def cmd_workspace_goto(workspace: str) -> str:
-        return f"workspace {workspace}"
-
-    @staticmethod
-    def cmd_workspace_goto_prev() -> str:
-        return "workspace back_and_forth"
-
-    @staticmethod
-    def cmd_window_move_workspace_prev() -> str:
-        return "move container workspace back_and_forth"
-
-    @staticmethod
-    def cmd_opacity_toggle(val: float) -> str:
-        # REF:
-        #   https://github.com/swaywm/sway/issues/7173#issuecomment-1551364058
-
-        MAX = 1.0
-
-        # find increment that would trigger an overshoot
-        incr = 0.05
-        while incr + val <= MAX:
-            incr *= 2
-
-        logger.debug(f"window/opacity-toggle> probing with increment [{incr}]")
-        ret = talk.execute("opacity plus 0.01")
-        if "error" in ret[0]:  # overshot
-            logger.info(f"window/opacity-toggle> {val}")
-            return f"opacity set {val}"
-
-        logger.info(f"window/opacity-toggle> resetting (to {MAX})")
-        return f"opacity set {MAX}"
 
 
 class Util:
@@ -97,11 +44,11 @@ class HoldSway(nodesway.Workspace):
     def split(self, window: nodesway.Window) -> str:
         logger.info(f"hold> split [{window}]")
 
-        e = Execute()
-        e.add(window.cmd_goto())
-        e.add(Execute.cmd_window_move_workspace_prev())
-        e.add(window.cmd_goto())
-        return e.assemble()
+        cmd = command.Command()
+        cmd.add(window.cmd_goto())
+        cmd.add(command.Command.cmd_window_move_workspace_prev())
+        cmd.add(window.cmd_goto())
+        return cmd.assemble()
 
     @classmethod
     def from_json(cls, j: dict) -> "HoldSway":
@@ -128,6 +75,10 @@ class Management:
         self._current_window: typing.Optional[nodesway.Window]  # type: ignore
 
         self._fzf = fzf.Fzf(fzf_tiebreak="index")
+
+    @property
+    def current_window(self) -> typing.Optional[nodesway.WindowError]:
+        return self._current_window
 
     def load_tree(self) -> None:
         for j in self._raw["nodes"]:
@@ -250,12 +201,12 @@ class Management:
         raise nodesway.WindowError
 
     def hold_add_current(self) -> None:
-        e = Execute()
+        cmd = command.Command()
 
-        e.add(self._hold_to_current_monitor())
-        e.add(self._hold.cmd_add_current())
+        cmd.add(self._hold_to_current_monitor())
+        cmd.add(self._hold.cmd_add_current())
 
-        e.execute()
+        cmd.execute()
 
     def hold_unique_container(self) -> None:
         # unique in container
@@ -270,7 +221,7 @@ class Management:
         self._hold_unique(mode=2)
 
     def _hold_unique(self, mode: int = 0) -> None:
-        e = Execute()
+        cmd = command.Command()
 
         if not (window := self._current_window):
             logger.warning("sway/hold-unique> no current window, skipping")
@@ -284,7 +235,7 @@ class Management:
             )
             return
 
-        e.add(self._hold_to_current_monitor())
+        cmd.add(self._hold_to_current_monitor())
 
         if mode <= 1:
             for container in Util.traverse_to_container(talk.nodes()):
@@ -318,51 +269,51 @@ class Management:
             if w == window:
                 continue
             logger.debug(f"sway/hold-unique> discarding [{w}]")
-            e.add(w.cmd_goto())
-            e.add(self._hold.cmd_add_current())
+            cmd.add(w.cmd_goto())
+            cmd.add(self._hold.cmd_add_current())
 
-        e.execute()
+        cmd.execute()
 
     def _hold_to_current_monitor(self, visit_last_window: bool = True) -> str:
-        e = Execute()
+        cmd = command.Command()
 
         if visit_last_window:
             # make sure new window is added last
-            e.add(self._hold.windows[-1].cmd_goto())
+            cmd.add(self._hold.windows[-1].cmd_goto())
 
         if self.monitor_of(self._hold) != self._current_monitor:
-            e.add(self._current_monitor.cmd_add_current())
-        e.add(Execute.cmd_workspace_goto_prev())
+            cmd.add(self._current_monitor.cmd_add_current())
+        cmd.add(command.Command.cmd_workspace_goto_prev())
 
-        return e.assemble()
+        return cmd.assemble()
 
     def hold_split(self) -> None:
-        e = Execute()
+        cmd = command.Command()
 
         if self.monitor_of(self._hold) != self._current_monitor:
-            e.add(self._hold.cmd_goto())
-            e.add(self._current_monitor.cmd_add_current())
+            cmd.add(self._hold.cmd_goto())
+            cmd.add(self._current_monitor.cmd_add_current())
 
         windows = list(reversed(self._hold.windows))  # newest first
         for s in self._fzf.choose_multi((w.format() for w in windows)):
             window = windows[windows.index(nodesway.Window.deformat(s))]
             logger.info(f"miao {self._hold.split(window)}")
-            e.add(self._hold.split(window))
+            cmd.add(self._hold.split(window))
 
-        e.execute()
+        cmd.execute()
 
     def hold_swap(self, window_id: typing.Optional[int] = None) -> None:
-        e = Execute()
+        cmd = command.Command()
 
         monitor = self._current_monitor
         if self.monitor_of(self._hold) != monitor:
-            e.add(self._hold.cmd_goto())
-            e.add(monitor.cmd_add_current())  # already on hold-workspace
-            e.add(Execute.cmd_workspace_goto_prev())
+            cmd.add(self._hold.cmd_goto())
+            cmd.add(monitor.cmd_add_current())  # already on hold-workspace
+            cmd.add(command.Command.cmd_workspace_goto_prev())
 
         if window_id:
             window = self.window_find(window_id)
-            e.add(window.cmd_goto())
+            cmd.add(window.cmd_goto())
 
         windows = list(reversed(self._hold.windows))  # newest first
         i = windows.index(
@@ -371,19 +322,19 @@ class Management:
             )
         )
         window_new = windows[i]
-        e.add(window_new.cmd_swap())
+        cmd.add(window_new.cmd_swap())
 
         # make swapped window last in hold
-        e.add(self._hold.cmd_goto())
+        cmd.add(self._hold.cmd_goto())
         for __ in range(i):
-            e.add("move right")
-        e.add(Execute.cmd_workspace_goto_prev())
+            cmd.add("move right")
+        cmd.add(command.Command.cmd_workspace_goto_prev())
 
         logger.info(
             f"swap> [{window if window_id else 'current'}] <-> "
             f"{i}/{len(self._hold.windows)}.[{window_new}]"
         )
-        e.execute()
+        cmd.execute()
 
     def footclient(self, cmd: str = "") -> nodesway.Window:
         return self.launch_float(f"footclient {cmd}")
@@ -431,4 +382,4 @@ class Management:
             logger.warning("sway/opacity-toggle> no current window, skipping")
             return
 
-        Execute().add(Execute.cmd_opacity_toggle(val)).execute()
+        command.Command().add(command.Command.cmd_opacity_toggle(val)).execute()

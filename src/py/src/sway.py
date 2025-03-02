@@ -72,7 +72,7 @@ if __name__ == "__main__":
             m = libsway.Management()
             m.load()
 
-            if window := m.current()[2]:
+            if window := m.current_window:
                 current = window.identifier
                 cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd {current}"
                 m.footclient(cmd)
