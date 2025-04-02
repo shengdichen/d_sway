@@ -2,38 +2,44 @@ general:
   startup_commands: []
   shutdown_commands: []
 
-  # Commands to run after the WM config is reloaded.
+  # run after every reloading config
   config_reload_commands: []
 
   focus_follows_cursor: false
 
-  # Whether to switch back and forth between the previously focused
-  # workspace when focusing the current workspace.
   toggle_workspace_on_refocus: false
 
   cursor_jump:
-    # Whether to automatically move the cursor on the specified trigger.
     enabled: true
-
-    # Trigger for cursor jump:
-    # - 'monitor_focus': Jump when focus changes between monitors.
-    # - 'window_focus': Jump when focus changes between windows.
-    trigger: 'monitor_focus'
+    trigger: 'window_focus'
 
   hide_method: 'cloak'
 
   # show only windows in currently visible workspaces (on any monitor)
   show_all_in_taskbar: false
 
+workspaces:
+  - name: '1'
+  - name: '2'
+  - name: '3'
+  - name: '4'
+  - name: '5'
+  - name: '6'
+  - name: '7'
+  - name: '8'
+  - name: '9'
+  - name: 'HOLD'
+
+# visual {{{
 gaps:
   scale_with_dpi: true
 
-  inner_gap: '3px'
+  inner_gap: '0px'
   outer_gap:
-    top: '5px'
-    right: '5px'
-    bottom: '5px'
-    left: '5px'
+    left: '3px'
+    top: '0px'
+    right: '3px'
+    bottom: '0px'
 
 window_effects:
   # NOTE:
@@ -61,7 +67,7 @@ window_effects:
 
   other_windows: # all other non-focused windows
     border:
-      enabled: false
+      enabled: true
       color: '#2b272f'
     hide_title_bar:
       enabled: false
@@ -77,122 +83,45 @@ window_behavior:
   state_defaults:
     floating:
       centered: true
-      shown_on_top: false
+      shown_on_top: true
 
     fullscreen:
       maximized: false
       shown_on_top: false
-
-workspaces:
-  - name: '1'
-  - name: '2'
-  - name: '3'
-  - name: '4'
-  - name: '5'
-  - name: '6'
-  - name: '7'
-  - name: '8'
-  - name: '9'
-  - name: 'HOLD'
-
-window_rules:
-  - commands: ['ignore']
-    match:
-      # Ignores any Zebar windows.
-      - window_process: { equals: 'zebar' }
-
-      # Ignores picture-in-picture windows for browsers.
-      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
-        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
-
-      # Ignore rules for various 3rd-party apps.
-      - window_process: { equals: 'PowerToys' }
-        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
-      - window_process: { equals: 'PowerToys' }
-        window_title: { regex: '.*? - Peek' }
-      - window_process: { equals: 'Lively' }
-        window_class: { regex: 'HwndWrapper' }
+# }}}
 
 keybindings:
-  - commands: ['focus --direction left']
-    bindings: ['alt+h']
-  - commands: ['focus --direction right']
-    bindings: ['alt+l']
-  - commands: ['focus --direction up']
-    bindings: ['alt+k']
-  - commands: ['focus --direction down']
-    bindings: ['alt+j']
+  # REF:
+  #   https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
-  - commands: ['move --direction left']
-    bindings: ['alt+shift+h']
-  - commands: ['move --direction right']
-    bindings: ['alt+shift+l']
-  - commands: ['move --direction up']
-    bindings: ['alt+shift+k']
-  - commands: ['move --direction down']
-    bindings: ['alt+shift+j']
-
-  - commands: ['size --width 67%']
-    bindings: ['alt+back']
-  - commands: ['size --width 50%']
-    bindings: ['alt+shift+back']
-  - commands: ['size --width 100%']
-    bindings: ['alt+ctrl+back']
-
-  # # Disables window management and all other keybindings until alt+shift+p
-  # # is pressed again.
-  # - commands: ['wm-toggle-pause']
-  #   bindings: ['alt+shift+p']
-
-  # Change tiling direction. This determines where new tiling windows will
-  # be inserted.
-  - commands: ['toggle-tiling-direction']
-    bindings: ['alt+v']
-
-  # # Change focus from tiling windows -> floating -> fullscreen.
-  # - commands: ['wm-cycle-focus']
-  #   bindings: ['alt+space']
-
-  - commands: ['toggle-floating --centered']
-    bindings: ['alt+f']
-  - commands: ['set-tiling']
-    bindings: ['alt+shift+f']
-
-  - commands: ['toggle-fullscreen']
-    bindings: ['alt+z']
-
+  # general {{{
   - commands: ['toggle-minimized']
     bindings: ['alt+q']
   - commands: ['close']
     bindings: ['alt+shift+q']
 
-  - commands: ['wm-exit']
-    bindings: ['alt+shift+e']
-
-  - commands: ['wm-reload-config']
-    bindings: ['alt+shift+r']
-
-  # Redraw all windows.
-  - commands: ['wm-redraw']
-    bindings: ['alt+shift+w']
-
-  # Launch CMD terminal. Alternatively, use `shell-exec wt` or
-  # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
-  # Terminal and Git Bash respectively.
   - commands: ['shell-exec alacritty']
     bindings: ['alt+enter']
+  # }}}
 
-  # # Focus the next/previous active workspace defined in `workspaces` config.
-  # - commands: ['focus --next-active-workspace']
-  #   bindings: ['alt+s']
-  # - commands: ['focus --prev-active-workspace']
-  #   bindings: ['alt+a']
-  #
-  # # Focus the workspace that last had focus.
-  # - commands: ['focus --recent-workspace']
-  #   bindings: ['alt+d']
+  - commands: ['focus --direction left']
+    bindings: ['alt+h']
+  - commands: ['focus --direction up']
+    bindings: ['alt+k']
+  - commands: ['focus --direction right']
+    bindings: ['alt+l']
+  - commands: ['focus --direction down']
+    bindings: ['alt+j']
 
-  # Change focus to a workspace defined in `workspaces` config.
+  - commands: ['move --direction left']
+    bindings: ['alt+shift+h']
+  - commands: ['move --direction up']
+    bindings: ['alt+shift+k']
+  - commands: ['move --direction right']
+    bindings: ['alt+shift+l']
+  - commands: ['move --direction down']
+    bindings: ['alt+shift+j']
+
   - commands: ['focus --workspace 1']
     bindings: ['alt+1']
   - commands: ['focus --workspace 2']
@@ -213,15 +142,6 @@ keybindings:
     bindings: ['alt+9']
   - commands: ['focus --workspace HOLD']
     bindings: ['alt+p']
-
-  - commands: ['move-workspace --direction left']
-    bindings: ['alt+shift+left']
-  - commands: ['move-workspace --direction right']
-    bindings: ['alt+shift+right']
-  - commands: ['move-workspace --direction up']
-    bindings: ['alt+shift+up']
-  - commands: ['move-workspace --direction down']
-    bindings: ['alt+shift+down']
 
   - commands: ['move --workspace 1', 'focus --workspace 1']
     bindings: ['alt+shift+1']
@@ -247,3 +167,73 @@ keybindings:
     - 'toggle-minimized'
     - 'focus --recent-workspace'
     bindings: ['alt+shift+p']
+
+  # layout {{{
+  - commands: ['size --width 67%']
+    bindings: ['alt+back']
+  - commands: ['size --width 50%']
+    bindings: ['alt+shift+back']
+  - commands: ['size --width 100%']
+    bindings: ['alt+ctrl+back']
+
+  - commands: ['toggle-floating --centered']
+    bindings: ['alt+f']
+  - commands: ['set-tiling']
+    bindings: ['alt+shift+f']
+
+  - commands: ['toggle-fullscreen']
+    bindings: ['alt+z']
+
+  - commands: ['toggle-tiling-direction']
+    bindings: ['alt+v']
+  # }}}
+
+  # misc {{{
+  - commands: ['wm-exit']
+    bindings: ['alt+shift+e']
+
+  - commands: ['wm-reload-config']
+    bindings: ['alt+shift+r']
+
+  # redraw all windows
+  - commands: ['wm-redraw']
+    bindings: ['alt+shift+w']
+
+  # # Disables window management and all other keybindings until alt+shift+p
+  # # is pressed again.
+  # - commands: ['wm-toggle-pause']
+  #   bindings: ['alt+shift+p']
+
+  # # Change focus from tiling windows -> floating -> fullscreen.
+  # - commands: ['wm-cycle-focus']
+  #   bindings: ['alt+space']
+  # }}}
+
+  # cross-monitor
+  - commands: ['move-workspace --direction left']
+    bindings: ['alt+shift+left']
+  - commands: ['move-workspace --direction up']
+    bindings: ['alt+shift+up']
+  - commands: ['move-workspace --direction right']
+    bindings: ['alt+shift+right']
+  - commands: ['move-workspace --direction down']
+    bindings: ['alt+shift+down']
+
+# rules {{{
+window_rules:
+  - commands: ['ignore']
+    match:
+      - window_process: { equals: 'zebar' }
+
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+
+      - window_process: { equals: 'PowerToys' }
+        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      - window_process: { equals: 'PowerToys' }
+        window_title: { regex: '.*? - Peek' }
+      - window_process: { equals: 'Lively' }
+        window_class: { regex: 'HwndWrapper' }
+# }}}
+
+# vim: foldmethod=marker
