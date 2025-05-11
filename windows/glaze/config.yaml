@@ -164,7 +164,6 @@ keybindings:
   - commands:
     - 'move --workspace HOLD'
     - 'focus --workspace HOLD'
-    - 'toggle-minimized'
     - 'focus --recent-workspace'
     bindings: ['lwin+alt+shift+p']
 
