@@ -624,3 +624,55 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def swap_within_workspace(self, positive_dir: bool = True) -> None:
         cmd = "swapnext" if positive_dir else "swapprev"
         talk.HyprTalk(cmd).execute_as_layoutmsg()
+
+    def swap_within_workspace_left(self) -> None:
+        self._swap_within_workspace_dir("l")
+
+    def swap_within_workspace_up(self) -> None:
+        self._swap_within_workspace_dir("u")
+
+    def swap_within_workspace_right(self) -> None:
+        self._swap_within_workspace_dir("r")
+
+    def swap_within_workspace_down(self) -> None:
+        self._swap_within_workspace_dir("d")
+
+    def _swap_within_workspace_dir(self, d: str) -> None:
+        # TODO:
+        #   use geometry based error detection
+
+        if (
+            talk.HyprTalk(f"swapwindow {d}").execute_as_dispatch()
+            == "Window to swap with not found"
+        ):
+            raise RuntimeError(
+                f"window> cannot swap window [{self._title}] in direction [{d}]"
+            )
+
+    def swap_to_limit_left(self) -> None:
+        while True:
+            try:
+                self.swap_within_workspace_left()
+            except RuntimeError:
+                break
+
+    def swap_to_limit_up(self) -> None:
+        while True:
+            try:
+                self.swap_within_workspace_left()
+            except RuntimeError:
+                break
+
+    def swap_to_limit_right(self) -> None:
+        while True:
+            try:
+                self.swap_within_workspace_right()
+            except RuntimeError:
+                break
+
+    def swap_to_limit_down(self) -> None:
+        while True:
+            try:
+                self.swap_within_workspace_down()
+            except RuntimeError:
+                break
