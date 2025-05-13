@@ -29,7 +29,7 @@ class Fzf:
 
     def _exec(
         self,
-        choices: typing.Sequence[str],
+        choices: cabc.Iterable[str],
         config_fzf_extra: typing.Optional[str] = None,
     ) -> cabc.Sequence[str]:
         config_fzf = (
@@ -49,11 +49,11 @@ class Fzf:
                 with open(selection_f.name, encoding="utf-8") as f:
                     return [line.rstrip() for line in f]
 
-    def choose_one(self, choices: typing.Sequence[str]) -> str:
+    def choose_one(self, choices: cabc.Iterable[str]) -> str:
         choices = self._exec(choices)
         if not choices:
             raise RuntimeError("fzf/single> nothing chosen")
         return choices[0]
 
-    def choose_multi(self, choices: typing.Sequence[str]) -> cabc.Sequence[str]:
+    def choose_multi(self, choices: cabc.Iterable[str]) -> cabc.Sequence[str]:
         return self._exec(choices, config_fzf_extra="--multi")
