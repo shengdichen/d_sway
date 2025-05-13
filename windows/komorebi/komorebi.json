@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.35/schema.json",
+  "app_specific_configuration_path": "$Env:KOMOREBI_CONFIG_HOME/applications.json",
+
+  "window_hiding_behaviour": "Cloak",
+  "cross_monitor_move_behaviour": "Insert",
+
+  "default_workspace_padding": 0,
+  "default_container_padding": 0,
+
+  "border": true,
+  "border_width": 2,
+  "border_offset": -1,
+  "border_style": "Square",
+  "border_colours": {
+    "single": "#97879f",
+    "unfocused": "#2b272f",
+
+    "stack": "#a787f7",
+    "monocle": "#efe3fb",
+    "floating": "#efe3fb",
+  },
+
+  "stackbar": {
+    "mode": "OnStack",
+    "label": "Title",
+    "height": 30,
+    "tabs": {
+      "width": 270,
+      "font_family": "Shevska W417",
+      "font_size": 27,
+      "background": "#000000",
+      "focused_text": "#efe3fb",
+      "unfocused_text": "#97879f",
+    }
+  },
+
+  "monitors": [
+    {
+      "workspaces": [
+        {
+          "name": "def",
+          "layout": "RightMainVerticalStack"
+        },
+        {
+          "name": "alt",
+          "layout": "BSP"
+        }
+      ]
+    },
+    {
+      "workspaces": [
+        {
+          "name": "def",
+          "layout": "RightMainVerticalStack"
+        },
+        {
+          "name": "alt",
+          "layout": "BSP"
+        }
+      ]
+    },
+    {
+      "workspaces": [
+        {
+          "name": "def",
+          "layout": "RightMainVerticalStack"
+        },
+        {
+          "name": "alt",
+          "layout": "BSP"
+        }
+      ]
+    }
+  ]
+}

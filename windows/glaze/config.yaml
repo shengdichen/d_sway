@@ -1,0 +1,238 @@
+general:
+  startup_commands: []
+  shutdown_commands: []
+
+  # run after every reloading config
+  config_reload_commands: []
+
+  focus_follows_cursor: false
+
+  toggle_workspace_on_refocus: false
+
+  cursor_jump:
+    enabled: true
+    trigger: 'window_focus'
+
+  hide_method: 'cloak'
+
+  # show only windows in currently visible workspaces (on any monitor)
+  show_all_in_taskbar: false
+
+workspaces:
+  - name: '1'
+  - name: '2'
+  - name: '3'
+  - name: '4'
+  - name: '5'
+  - name: '6'
+  - name: '7'
+  - name: '8'
+  - name: '9'
+  - name: 'HOLD'
+
+# visual {{{
+gaps:
+  scale_with_dpi: true
+
+  inner_gap: '0px'
+  outer_gap:
+    left: '3px'
+    top: '0px'
+    right: '3px'
+    bottom: '0px'
+
+window_effects:
+  # NOTE:
+  # 1. hide_title_bar:
+  #   -> remove title bar from the window's frame
+  #   -> can cause rendering issues for some applications.
+  # 2. corner-style:
+  #   -> 'square' OR 'rounded' OR 'small_rounded'
+
+  focused_window:
+    border:
+      enabled: true
+      color: '#97879f'
+
+    hide_title_bar:
+      enabled: false
+
+    corner_style:
+      enabled: true
+      style: 'square'
+
+    transparency:
+      enabled: false
+      opacity: 1.0
+
+  other_windows: # all other non-focused windows
+    border:
+      enabled: true
+      color: '#2b272f'
+    hide_title_bar:
+      enabled: false
+    corner_style:
+      enabled: true
+      style: 'square'
+    transparency:
+      enabled: false
+      opacity: 0.90625
+
+window_behavior:
+  initial_state: 'tiling'
+  state_defaults:
+    floating:
+      centered: true
+      shown_on_top: true
+
+    fullscreen:
+      maximized: false
+      shown_on_top: false
+# }}}
+
+keybindings:
+  # REF:
+  #   https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+
+  # general {{{
+  - commands: ['toggle-minimized']
+    bindings: ['lwin+alt+q']
+  - commands: ['close']
+    bindings: ['lwin+alt+shift+q']
+
+  - commands: ['shell-exec alacritty']
+    bindings: ['lwin+alt+enter']
+  # }}}
+
+  - commands: ['focus --direction left']
+    bindings: ['lwin+alt+h']
+  - commands: ['focus --direction up']
+    bindings: ['lwin+alt+k']
+  - commands: ['focus --direction right']
+    bindings: ['lwin+alt+l']
+  - commands: ['focus --direction down']
+    bindings: ['lwin+alt+j']
+
+  - commands: ['move --direction left']
+    bindings: ['lwin+alt+shift+h']
+  - commands: ['move --direction up']
+    bindings: ['lwin+alt+shift+k']
+  - commands: ['move --direction right']
+    bindings: ['lwin+alt+shift+l']
+  - commands: ['move --direction down']
+    bindings: ['lwin+alt+shift+j']
+
+  - commands: ['focus --workspace 1']
+    bindings: ['lwin+alt+1']
+  - commands: ['focus --workspace 2']
+    bindings: ['lwin+alt+2']
+  - commands: ['focus --workspace 3']
+    bindings: ['lwin+alt+3']
+  - commands: ['focus --workspace 4']
+    bindings: ['lwin+lwin+alt+4']
+  - commands: ['focus --workspace 5']
+    bindings: ['lwin+alt+5']
+  - commands: ['focus --workspace 6']
+    bindings: ['lwin+alt+6']
+  - commands: ['focus --workspace 7']
+    bindings: ['lwin+alt+7']
+  - commands: ['focus --workspace 8']
+    bindings: ['lwin+alt+8']
+  - commands: ['focus --workspace 9']
+    bindings: ['lwin+alt+9']
+  - commands: ['focus --workspace HOLD']
+    bindings: ['lwin+alt+p']
+
+  - commands: ['move --workspace 1', 'focus --workspace 1']
+    bindings: ['lwin+alt+shift+1']
+  - commands: ['move --workspace 2', 'focus --workspace 2']
+    bindings: ['lwin+alt+shift+2']
+  - commands: ['move --workspace 3', 'focus --workspace 3']
+    bindings: ['lwin+alt+shift+3']
+  - commands: ['move --workspace 4', 'focus --workspace 4']
+    bindings: ['lwin+alt+shift+4']
+  - commands: ['move --workspace 5', 'focus --workspace 5']
+    bindings: ['lwin+alt+shift+5']
+  - commands: ['move --workspace 6', 'focus --workspace 6']
+    bindings: ['lwin+alt+shift+6']
+  - commands: ['move --workspace 7', 'focus --workspace 7']
+    bindings: ['lwin+alt+shift+7']
+  - commands: ['move --workspace 8', 'focus --workspace 8']
+    bindings: ['lwin+alt+shift+8']
+  - commands: ['move --workspace 9', 'focus --workspace 9']
+    bindings: ['lwin+alt+shift+9']
+  - commands:
+    - 'move --workspace HOLD'
+    - 'focus --workspace HOLD'
+    - 'focus --recent-workspace'
+    bindings: ['lwin+alt+shift+p']
+
+  # layout {{{
+  - commands: ['size --width 67%']
+    bindings: ['lwin+alt+back']
+  - commands: ['size --width 50%']
+    bindings: ['lwin+alt+shift+back']
+  - commands: ['size --width 100%']
+    bindings: ['lwin+alt+ctrl+back']
+
+  - commands: ['toggle-floating --centered']
+    bindings: ['lwin+alt+f']
+  - commands: ['set-tiling']
+    bindings: ['lwin+alt+shift+f']
+
+  - commands: ['toggle-fullscreen']
+    bindings: ['lwin+alt+z']
+
+  - commands: ['toggle-tiling-direction']
+    bindings: ['lwin+alt+v']
+  # }}}
+
+  # misc {{{
+  - commands: ['wm-exit']
+    bindings: ['lwin+alt+shift+e']
+
+  - commands: ['wm-reload-config']
+    bindings: ['lwin+alt+shift+r']
+
+  # redraw all windows
+  - commands: ['wm-redraw']
+    bindings: ['lwin+alt+shift+w']
+
+  # # Disables window management and all other keybindings until lwin+alt+shift+p
+  # # is pressed again.
+  # - commands: ['wm-toggle-pause']
+  #   bindings: ['lwin+alt+shift+p']
+
+  # # Change focus from tiling windows -> floating -> fullscreen.
+  # - commands: ['wm-cycle-focus']
+  #   bindings: ['lwin+alt+space']
+  # }}}
+
+  # cross-monitor
+  - commands: ['move-workspace --direction left']
+    bindings: ['lwin+alt+shift+left']
+  - commands: ['move-workspace --direction up']
+    bindings: ['lwin+alt+shift+up']
+  - commands: ['move-workspace --direction right']
+    bindings: ['lwin+alt+shift+right']
+  - commands: ['move-workspace --direction down']
+    bindings: ['lwin+alt+shift+down']
+
+# rules {{{
+window_rules:
+  - commands: ['ignore']
+    match:
+      - window_process: { equals: 'zebar' }
+
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+
+      - window_process: { equals: 'PowerToys' }
+        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      - window_process: { equals: 'PowerToys' }
+        window_title: { regex: '.*? - Peek' }
+      - window_process: { equals: 'Lively' }
+        window_class: { regex: 'HwndWrapper' }
+# }}}
+
+# vim: foldmethod=marker
