@@ -34,7 +34,7 @@ class HyprMonitor:
         disabled: bool,
         current_format: str,
         available_modes: list[str],
-    ):  # pylint: disable=too-many-locals
+    ):  # pylint: disable=too-many-locals,too-many-positional-arguments
         self._id = _id
         self._name = name
         self._description = description
@@ -149,7 +149,7 @@ class HyprWorkspace:
         last_active_window_id: str,
         last_active_window_title: str,
         monitor: HyprMonitor,
-    ):
+    ):  # pylint: disable=too-many-positional-arguments
         self._id = _id
         self._name = name
         self._n_windows = n_windows
@@ -287,7 +287,7 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
         idx_focus: int,
         workspace: HyprWorkspace,
         monitor: HyprMonitor,
-    ):  # pylint: disable=too-many-locals
+    ):  # pylint: disable=too-many-locals,too-many-positional-arguments
         self._address = address
         self._mapped = mapped
         self._hidden = hidden
@@ -595,17 +595,15 @@ class HyprWindow:  # pylint: disable=too-many-public-methods
     def selection_prompt(self) -> str:
         greyer = prettyprint.Prettyprint().color_foreground("grey-bright")
 
-        str_class = f"{self._class.split(".")[-1] if self._class else "class?"}"
+        str_class = f"{self._class.split('.')[-1] if self._class else 'class?'}"
         if str_class == "firefox-developer-edition":
             str_class = "firefoxd"
-        str_class = (
-            f"{prettyprint.Prettyprint().cyan(str_class)}" f"{greyer.apply(">")}"
-        )
+        str_class = f"{prettyprint.Prettyprint().cyan(str_class)}{greyer.apply('>')}"
 
         str_title = self._title or "title?"
 
         str_addr = (
-            f"{greyer.apply(f"// {self._address[:2]}")}"
+            f"{greyer.apply(f'// {self._address[:2]}')}"
             f"{greyer.decorate_underline().apply(self._address[2:])}"
         )
 

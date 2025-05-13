@@ -8,6 +8,8 @@ CURRENT_CONF="current.conf"
 
 __mkdir() {
     mkdir -p "${DIR_HYPR}"
+    mkdir -p "${HOME}/.local/state/hypr"
+
     mkdir -p "${HOME}/.config/river"
     mkdir -p "${HOME}/.config/niri"
 }
