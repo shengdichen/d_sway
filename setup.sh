@@ -28,15 +28,13 @@ __adhoc() {
 }
 
 __stow() {
-    (
-        cd .. && stow -R "$(basename "${SCRIPT_PATH}")"
-    )
+    stow --target "${HOME}" --ignore "src" "linux"
 
-    find "./src/py/src" -type d | grep "__pycache__$" | while read -r _d; do
+    find "./linux/src/py/src" -type d | grep "__pycache__$" | while read -r _d; do
         rm -r -- "${_d}" # will otherwise cause stow-conflict
     done
     (
-        cd "./src/py/src" || exit 3
+        cd "./linux/src/py/src" || exit 3
         mkdir -p "${DIR_HYPR}/src/common"
         stow -R --target "${DIR_HYPR}/src/common" "common"
         mkdir -p "${DIR_HYPR}/src/hyprland"
@@ -44,7 +42,7 @@ __stow() {
         ln -srf "$(realpath "./hyprland.py")" "${DIR_HYPR}/src/."
     )
     (
-        cd "./src/py/src" || exit 3
+        cd "./linux/src/py/src" || exit 3
         mkdir -p "${DIR_SWAY}/src/common"
         stow -R --target "${DIR_SWAY}/src/common" "common"
         mkdir -p "${DIR_SWAY}/src/sway"
@@ -54,7 +52,13 @@ __stow() {
 }
 
 __wallpaper() {
-    "${SCRIPT_PATH}/.local/script/wallpaper.sh"
+    local _dir_wallpapers
+    _dir_wallpapers="$(realpath "$(xdg-user-dir PICTURES)")/wallpapers"
+    mkdir -p "${_dir_wallpapers}"
+
+    (cd "./common" && stow --target "${_dir_wallpapers}" "wallpapers")
+
+    "${SCRIPT_PATH}/linux/.local/script/wallpaper.sh"
 }
 
 main() {
