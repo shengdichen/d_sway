@@ -43,6 +43,17 @@ if __name__ == "__main__":
             Front().hold_add_current()
             return
 
+        if mode == "hold-unique-container":
+            m = libsway.Management()
+            m.load()
+            m.hold_unique_container()
+            return
+        if mode == "hold-unique-workspace":
+            m = libsway.Management()
+            m.load()
+            m.hold_unique_workspace()
+            return
+
         if mode == "hold-split-cmd":
             Front().hold_split_cmd()
             return
@@ -61,7 +72,7 @@ if __name__ == "__main__":
             m = libsway.Management()
             m.load()
 
-            if window := m.current()[2]:
+            if window := m.current_window:
                 current = window.identifier
                 cmd = f"python {pathlib.Path(__file__).resolve()} {mode}-cmd {current}"
                 m.footclient(cmd)
@@ -72,6 +83,12 @@ if __name__ == "__main__":
             )
             cmd = f"python {pathlib.Path(__file__).resolve()} hold-split-cmd"
             m.footclient(cmd)
+            return
+
+        if mode == "opacity-toggle":
+            m = libsway.Management()
+            m.load()
+            m.opacity_toggle(float(args[0]))
             return
 
         if mode == "test":

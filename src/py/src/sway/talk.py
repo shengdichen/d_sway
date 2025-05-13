@@ -59,3 +59,6 @@ class TalkSway:
 
     def monitors(self) -> dict:
         return self._execute(3)
+
+
+talk = TalkSway()
