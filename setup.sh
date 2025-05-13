@@ -52,6 +52,12 @@ __stow() {
 }
 
 __wallpaper() {
+    local _dir_wallpapers
+    _dir_wallpapers="$(realpath "$(xdg-user-dir PICTURES)")/wallpapers"
+    mkdir -p "${_dir_wallpapers}"
+
+    (cd "./common" && stow --target "${_dir_wallpapers}" "wallpapers")
+
     "${SCRIPT_PATH}/linux/.local/script/wallpaper.sh"
 }
 
