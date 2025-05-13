@@ -10,7 +10,7 @@ class Fzf:
         fzf_ansi: bool = True,
         fzf_reverse: bool = True,
         fzf_height_perc: int = 100,
-        fzf_no_sort: bool = False,
+        fzf_sort: bool = True,
         fzf_tiebreak: str = "",
     ):
         self._fzf = "fzf"
@@ -22,7 +22,7 @@ class Fzf:
             self._config_fzf = f"{self._config_fzf} --reverse"
         if fzf_height_perc:
             self._config_fzf = f"{self._config_fzf} --height={fzf_height_perc}%"
-        if fzf_no_sort:
+        if not fzf_sort:
             self._config_fzf = f"{self._config_fzf} --no-sort"
         if fzf_tiebreak:
             self._config_fzf = f"{self._config_fzf} --tiebreak={fzf_tiebreak}"

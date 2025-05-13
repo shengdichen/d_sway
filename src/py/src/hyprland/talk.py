@@ -1,19 +1,25 @@
 import json
+import logging
 import os
-import socket
 import typing
+
+from common import comm
+
+logger = logging.getLogger(__name__)
 
 
 class HyprTalk:
     def __init__(self, cmd: str):
         self._cmd = cmd
 
-        self._socket = (
+        soc = (
             f"{os.getenv('XDG_RUNTIME_DIR')}/"
             "hypr/"
             f"{os.getenv('HYPRLAND_INSTANCE_SIGNATURE')}/"
             ".socket.sock"
         )
+        logger.debug(f"talk/hyprland> socket [{soc}]")
+        self._comm = comm.Comm(soc)
 
     def execute_to_str(self) -> str:
         return self._execute(self._cmd)
@@ -45,16 +51,7 @@ class HyprTalk:
         self._execute(f"setprop {self._cmd}")
 
     def _execute(self, cmd: str) -> str:
-        cmd_b = cmd.encode()
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
-            sock.connect(self._socket)
-            sock.send(cmd_b)
-
-            res_b = b""
-            while r := sock.recv(8192):
-                res_b += r
-
-        res = res_b.decode()
+        res = self._comm.talk(cmd.encode()).decode()
         if res == "unknown request":
             raise ValueError(f"talk> invalid command [{cmd}]")
         return res

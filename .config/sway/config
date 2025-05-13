@@ -1,5 +1,14 @@
-include ./conf/main.conf
+include {
+    ./conf/base.conf
 
-include ./util/launch.conf
+    ./conf/layout.conf
+    ./conf/visual.conf
+
+    ./conf/dev.conf
+    ./conf/dev/*.conf
+    ./conf/startup.conf
+
+    ./conf/adhoc/current.conf
+}
 
 # vim: filetype=swayconfig
